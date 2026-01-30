@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import Link from "next/link"
 // import { Label } from "@radix-ui/react-dropdown-menu"
 // import { Label } from "@radix-ui/react-dropdown-menu"
 // import { Input } from "../ui/input"
@@ -24,7 +25,9 @@ export function LoginFormPage() {
                     Enter your email below to login to your account
                 </CardDescription>
                 <CardAction>
-                    <Button variant="link">Sign Up</Button>
+                    <Link href="/register" className="text-sm font-medium  hover:underline">
+                        Sign Up
+                    </Link>
                 </CardAction>
             </CardHeader>
             <CardContent>

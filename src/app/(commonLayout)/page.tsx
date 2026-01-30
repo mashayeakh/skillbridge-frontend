@@ -2,6 +2,7 @@ import { Hero } from '@/components/modules/homepage/hero'
 import React from 'react'
 import Review from '@/components/modules/homepage/review';
 import WorkingProcessPage from '@/components/modules/homepage/working-process';
+import TutorTesimonials from '@/components/modules/homepage/tutorList';
 
 export default function HomePage() {
     return (
@@ -16,7 +17,7 @@ export default function HomePage() {
             />
             <Review />
             <WorkingProcessPage />
-
+            <TutorTesimonials />
         </div>
     )
 }

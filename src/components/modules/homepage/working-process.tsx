@@ -16,16 +16,11 @@ export default function WorkingProcessPage() {
                     </p>
 
                     <div className="mt-8 flex flex-col gap-4 sm:flex-row justify-center">
-                        {/* <Button asChild size="lg">
-                            <a href="/search">
-                                Find a Tutor <ArrowRight className="ml-2 h-4 w-4" />
-                            </a>
-                        </Button>
-                        <Button asChild variant="outline" size="lg">
-                            <a href="/tutor/signup">Become a Tutor</a>
-                        </Button> */}
                         <HowItWorks />
                     </div>
+                    <Button asChild variant="outline" size="lg">
+                        <a href="/register">Find a Tutor</a>
+                    </Button>
                 </div>
             </section>
 
