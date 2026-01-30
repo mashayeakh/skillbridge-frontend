@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import FilterTutors from "./filterTutors"
 import { Tutor } from "@/types/tutor"
-import { fetchTutors } from "@/lib/api/tutor"
+import { fetchTutors } from "@/lib/api/fetchTutor"
 
 const BrowseTutors = () => {
   const [tutors, setTutors] = useState<Tutor[]>([])

@@ -18,11 +18,11 @@ export default function TestimonialPage() {
         <section className="py-12 md:py-16 bg-[#F7F2ED]">
             <div className="container mx-auto px-6 ">
                 <div className="text-center mb-8 md:mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold">What Our Clients Say</h2>
-                    <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+                    <h2 className="text-3xl md:text-4xl font-bold">What Our Students Say</h2>
+                    {/* <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
                         Discover how our customers are using our products to build their
                         businesses
-                    </p>
+                    </p> */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
