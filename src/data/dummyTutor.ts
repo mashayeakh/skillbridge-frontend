@@ -32,4 +32,59 @@ export const dummyTutor = [
             alt: "Emily Carter",
         },
     },
+    {
+        id: 4,
+        name: "Michael Chen",
+        role: "Graduate Student",
+        quote:
+            "This platform saves so much time. Choosing a tutor and booking a lesson is super smooth.",
+        image: {
+            src: "https://i.pravatar.cc/150?img=45",
+            alt: "Emily Carter",
+        },
+    },
+    {
+        id: 5,
+        name: "Michael Chen",
+        role: "Graduate Student",
+        quote:
+            "This platform saves so much time. Choosing a tutor and booking a lesson is super smooth.",
+        image: {
+            src: "https://i.pravatar.cc/150?img=45",
+            alt: "Emily Carter",
+        },
+    },
+    {
+        id: 6,
+        name: "Michael Chen",
+        role: "Graduate Student",
+        quote:
+            "This platform saves so much time. Choosing a tutor and booking a lesson is super smooth.",
+        image: {
+            src: "https://i.pravatar.cc/150?img=45",
+            alt: "Emily Carter",
+        },
+    },
+    {
+        id: 7,
+        name: "Michael Chen",
+        role: "Graduate Student",
+        quote:
+            "This platform saves so much time. Choosing a tutor and booking a lesson is super smooth.",
+        image: {
+            src: "https://i.pravatar.cc/150?img=45",
+            alt: "Emily Carter",
+        },
+    },
+    {
+        id: 8,
+        name: "Michael Chen",
+        role: "Graduate Student",
+        quote:
+            "This platform saves so much time. Choosing a tutor and booking a lesson is super smooth.",
+        image: {
+            src: "https://i.pravatar.cc/150?img=45",
+            alt: "Emily Carter",
+        },
+    },
 ];
