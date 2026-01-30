@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "../../ui/button";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import HowItWorks from "../../HowItWorks";
 
 export default function WorkingProcessPage() {
@@ -18,8 +19,10 @@ export default function WorkingProcessPage() {
                     <div className="mt-8 flex flex-col gap-4 sm:flex-row justify-center">
                         <HowItWorks />
                     </div>
-                    <Button asChild variant="outline" size="lg">
-                        <a href="/register">Find a Tutor</a>
+                    <Button className="">
+                        <Link href="/register">
+                            Sign up
+                        </Link>
                     </Button>
                 </div>
             </section>

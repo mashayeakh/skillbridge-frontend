@@ -1,4 +1,4 @@
-import { dummyTutor } from "@/data/dummyTutor";
+import { dummyTutor } from "@/data/dummy/dummyTutor";
 import {
     Card,
     CardContent,
