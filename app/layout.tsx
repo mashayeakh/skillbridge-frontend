@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/provider/ThemeProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 // import NavbarClient from "@/components/NavbarClient";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { Footer2 } from "@/components/footer2";
+import { Toaster } from "sonner";
+import QueryProvider from "@/providers/QueryProviders";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,16 +36,19 @@ export default function RootLayout({
       >
         {/* <h1>This is root layout</h1> */}
         <ThemeProvider
+
           attribute="class"
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange // when toggling happens, this will change
         >
-          <LanguageProvider>
-            {children}
-            {/* <NavbarClient /> */}
-          </LanguageProvider>
-          {/* <Toaster richColors position="top-center" /> */}
+          <QueryProvider>
+            <LanguageProvider>
+              {children}
+              {/* <NavbarClient /> */}
+            </LanguageProvider>
+            <Toaster richColors position="top-center" />
+          </QueryProvider>
         </ThemeProvider>
         <Footer2 />
       </body>

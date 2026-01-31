@@ -259,7 +259,7 @@ export default async function TutorIdPage({ params }: TutorPageProps) {
                                     <Users className="size-5 text-blue-500" />
                                 </div>
                                 <div className="text-xs text-muted-foreground">Students</div>
-                                <div className="text-2xl font-bold">{(Math.random() * 200 + 50).toFixed(0)}</div>
+                                {/* <div className="text-2xl font-bold">{(Math.random() * 200 + 50).toFixed(0)}</div> */}
                             </div>
                         </div>
 
@@ -327,10 +327,10 @@ export default async function TutorIdPage({ params }: TutorPageProps) {
                                     asChild
                                     className="text-muted-foreground hover:text-foreground"
                                 >
-                                    {/* <a href="/tutors">
+                                    <Link href="/browse-tutor">
                                         View all
                                         <ChevronRight className="ml-1 size-4" />
-                                    </a> */}
+                                    </Link>
                                 </Button>
                             </div>
                             {/* <CardDescription>

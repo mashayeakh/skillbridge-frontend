@@ -1,23 +1,15 @@
 "use client";
 
-import { Book, Menu, Sunset, Trees, Zap } from "lucide-react";
+import { LayoutDashboard, Menu, User, Settings, LogOut, KeyRound, } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useState, useRef, useEffect } from "react";
 
 import { cn } from "@/lib/utils";
-
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import {
   Sheet,
@@ -26,8 +18,25 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import Link from "next/link";
-import { ModeToggle } from "./ModeToggle";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+import { logoutUser } from "@/lib/api/auth";
+import { useSession } from "@/lib/hooks/useSession";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface MenuItem {
   title: string;
@@ -44,7 +53,6 @@ interface Navbar1Props {
     src: string;
     alt: string;
     title: string;
-    className?: string;
   };
   menu?: MenuItem[];
   auth?: {
@@ -52,10 +60,6 @@ interface Navbar1Props {
       title: string;
       url: string;
     };
-    // signup: {
-    //   title: string;
-    //   url: string;
-    // };
   };
 }
 
@@ -67,111 +71,357 @@ const Navbar = ({
     title: "SkillBridge",
   },
   menu = [
-    // { title: "Home", url: "#" },
-    {
-      title: "Browse Tutors",
-      url: "/browse-tutor",
-    },
-    {
-      title: "Become a Tutor",
-      url: "/become-tutor",
-    },
+    { title: "Browse Tutors", url: "/browse-tutor" },
+    { title: "Become a Tutor", url: "/become-tutor" },
   ],
   auth = {
     login: { title: "Login", url: "/login" },
-    // signup: { title: "Sign up", url: "#" },
   },
   className,
 }: Navbar1Props) => {
-  return (
+  const router = useRouter();
+  const { data: session, refetch } = useSession();
+  const isLoggedIn = !!session;
+  const [isSpeedDialOpen, setIsSpeedDialOpen] = useState(false);
+  const speedDialRef = useRef<HTMLDivElement>(null);
 
-    <section className={cn("bg-[#1D1B1A]", className)}>
-      {/* Top banner / info bar */}
-      <div className="bg-[#0F2027] dark:bg-[#0F2027] py-2">
-        <div className="container mx-auto flex items-center justify-center">
-          <h1 className="text-xl font-semibold text-white text-center py-2">
-            Connect with Expert Tutors, Learn Anything
+  console.log("sessiotn ", session?.user?.name)
+
+  // Close speed dial when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        speedDialRef.current &&
+        !speedDialRef.current.contains(event.target as Node)
+      ) {
+        setIsSpeedDialOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      toast.success("Logged out successfully");
+      await refetch();
+      setIsSpeedDialOpen(false);
+      router.push("/");
+    } catch (err) {
+      toast.error("Logout failed");
+    }
+  };
+
+  // Change password handler
+  const handleChangePassword = () => {
+    setIsSpeedDialOpen(false);
+    router.push("/change-password");
+    toast.info("Redirecting to change password");
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!session?.user?.name) return "U";
+    const names = session?.user?.name.split(" ");
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    }
+    return session?.user?.name.charAt(0).toUpperCase();
+  };
+
+  return (
+    <section className={cn("bg-gradient-to-r from-gray-900 to-gray-800 shadow-lg", className)}>
+      {/* Top banner */}
+      <div className="bg-gradient-to-r from-[#0F2027] via-[#203A43] to-[#2C5364] py-2">
+        <div className="container mx-auto flex justify-center">
+          <h1 className="text-xl font-semibold text-white py-2 tracking-wide">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-300">
+              Connect with Expert Tutors, Learn Anything
+            </span>
           </h1>
         </div>
       </div>
 
-      {/* Navbar */}
-      <div className="container mx-auto px-4 lg:px-32">
-        {/* Desktop Menu */}
+      <div className="container mx-auto px-4 lg:px-32 py-4">
+        {/* Desktop */}
         <nav className="hidden items-center justify-between lg:flex">
-          <div className="flex items-center gap-6">
-            {/* Logo */}
-            <Link href={logo.url} className="flex items-center gap-2">
-              <img
-                src={logo.src}
-                className="max-h-8 invert dark:invert-0"
-                alt={logo.alt}
-              />
-              <span className="text-lg font-semibold tracking-tighter text-white">
+          <div className="flex items-center gap-8">
+            <Link href={logo.url} className="flex items-center gap-3 group">
+              <div className="relative">
+                <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                <img
+                  src={logo.src}
+                  className="max-h-10 invert relative z-10 transition-transform group-hover:scale-105"
+                  alt={logo.alt}
+                />
+              </div>
+              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
                 {logo.title}
               </span>
             </Link>
 
-            <div className="flex items-center">
-              <NavigationMenu>
-                <NavigationMenuList className="flex items-center gap-6">
-                  {menu.map((item) => renderMenuItem(item))}
-                </NavigationMenuList>
-              </NavigationMenu>
-            </div>
+            <NavigationMenu>
+              <NavigationMenuList className="flex gap-8">
+                {menu.map((item) => (
+                  <Link
+                    key={item.title}
+                    href={item.url}
+                    className="text-gray-300 hover:text-white text-sm font-medium transition-colors relative group"
+                  >
+                    {item.title}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-blue-400 group-hover:w-full transition-all duration-300"></span>
+                  </Link>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
 
-          <div className="flex gap-2">
-            {/* <ModeToggle /> */}
-            <div className="text-white font-bold text-[14px]">
-              <Link href={auth.login.url}>{auth.login.title}</Link>
-            </div>
+          <div className="flex items-center gap-4">
+            {!isLoggedIn ? (
+              <Button
+                asChild
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-6 py-2 rounded-full transition-all hover:shadow-lg hover:scale-105"
+              >
+                <Link href={auth.login.url}>{auth.login.title}</Link>
+              </Button>
+            ) : (
+              <div className="relative" ref={speedDialRef}>
+                {/* Speed Dial Button */}
+                <button
+                  onClick={() => setIsSpeedDialOpen(!isSpeedDialOpen)}
+                  className="relative group"
+                >
+                  <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full blur opacity-0 group-hover:opacity-30 transition-opacity"></div>
+                  <Avatar className="relative z-10 border-2 border-transparent group-hover:border-cyan-400 transition-all duration-300 hover:scale-105 cursor-pointer">
+                    <AvatarImage
+                      src={session?.user?.image || ""}
+                      alt={session?.user?.name || "User"}
+                    />
+                    <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold">
+                      {getUserInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+
+                {/* Speed Dial Menu */}
+                {isSpeedDialOpen && (
+                  <div className="absolute right-0 mt-3 w-64 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-5 duration-200">
+                    <div className="p-4">
+                      {/* User Info */}
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-gray-800 to-gray-900/50">
+                        <Avatar className="border-2 border-cyan-500/30">
+                          <AvatarImage
+                            src={session?.user?.image || ""}
+                            alt={session?.user?.name || "User"}
+                          />
+                          <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold">
+                            {getUserInitials()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold text-white">
+                            {session?.user?.name}
+                          </p>
+                          <p className="text-sm text-gray-400 truncate max-w-[180px]">
+                            {session?.user?.email || "Welcome!"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 mt-3">
+                        {/* dashboard */}
+                        <button
+                          onClick={() => {
+                            setIsSpeedDialOpen(false);
+                            router.push("/student");
+                          }}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors group"
+                        >
+                          <div className="p-2 rounded-full bg-gray-800 group-hover:bg-cyan-900/30 transition-colors">
+                            <LayoutDashboard className="h-4 w-4 text-cyan-400" />
+                          </div>
+                          <span className="font-medium">Dashboard</span>
+                        </button>
+
+                        {/* Profile Option */}
+
+                        <button
+                          onClick={() => {
+                            setIsSpeedDialOpen(false);
+                            router.push("/profile");
+                          }}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors group"
+                        >
+                          <div className="p-2 rounded-full bg-gray-800 group-hover:bg-cyan-900/30 transition-colors">
+                            <User className="h-4 w-4 text-cyan-400" />
+                          </div>
+                          <span className="font-medium">My Profile</span>
+                        </button>
+
+                        {/* Change Password Option */}
+                        <button
+                          onClick={handleChangePassword}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors group"
+                        >
+                          <div className="p-2 rounded-full bg-gray-800 group-hover:bg-amber-900/30 transition-colors">
+                            <KeyRound className="h-4 w-4 text-amber-400" />
+                          </div>
+                          <span className="font-medium">Change Password</span>
+                        </button>
+
+                        {/* Settings Option */}
+                        <button
+                          onClick={() => {
+                            setIsSpeedDialOpen(false);
+                            router.push("/settings");
+                          }}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors group"
+                        >
+                          <div className="p-2 rounded-full bg-gray-800 group-hover:bg-purple-900/30 transition-colors">
+                            <Settings className="h-4 w-4 text-purple-400" />
+                          </div>
+                          <span className="font-medium">Settings</span>
+                        </button>
+
+                        {/* Divider */}
+                        <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent my-2"></div>
+
+                        {/* Logout Option */}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors group"
+                        >
+                          <div className="p-2 rounded-full bg-red-900/20 group-hover:bg-red-900/40 transition-colors">
+                            <LogOut className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium">Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </nav>
 
-        {/* Mobile Menu */}
+        {/* Mobile */}
         <div className="block lg:hidden">
           <div className="flex items-center justify-between">
-            {/* Logo */}
-            <a href={logo.url} className="flex items-center gap-2">
+            <Link href={logo.url} className="flex items-center gap-3">
               <img
                 src={logo.src}
-                className="max-h-8 invert dark:invert-0"
+                className="max-h-8 invert"
                 alt={logo.alt}
               />
-            </a>
+              <span className="text-lg font-semibold text-white">
+                {logo.title}
+              </span>
+            </Link>
+
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="size-4" />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+                >
+                  <Menu className="size-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent className="overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>
-                    <a href={logo.url} className="flex items-center gap-2">
-                      <img
-                        src={logo.src}
-                        className="max-h-8 invert dark:invert-0"
-                        alt={logo.alt}
-                      />
-                    </a>
+
+              <SheetContent className="bg-gray-900 border-gray-800 text-white">
+                <SheetHeader className="mb-6">
+                  <SheetTitle className="flex items-center gap-3">
+                    <img
+                      src={logo.src}
+                      className="max-h-8 invert"
+                      alt={logo.alt}
+                    />
+                    <span className="text-white">{logo.title}</span>
                   </SheetTitle>
                 </SheetHeader>
-                <div className="flex flex-col gap-6 p-4">
-                  <Accordion
-                    type="single"
-                    collapsible
-                    className="flex w-full flex-col gap-4"
-                  >
-                    {menu.map((item) => renderMobileMenuItem(item))}
-                  </Accordion>
 
-                  <div className="flex flex-col gap-3">
-                    <Button asChild variant="outline">
-                      <a href={auth.login.url}>{auth.login.title}</a>
-                    </Button>
+                <div className="flex flex-col gap-4">
+                  {/* Menu Items */}
+                  <div className="space-y-2">
+                    {menu.map((item) => (
+                      <Link
+                        key={item.title}
+                        href={item.url}
+                        className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800 transition-colors"
+                      >
+                        <span className="font-medium">{item.title}</span>
+                        <div className="h-1 w-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"></div>
+                      </Link>
+                    ))}
                   </div>
+
+                  {/* User Section for Mobile */}
+                  {isLoggedIn ? (
+                    <>
+                      <div className="p-4 rounded-lg bg-gradient-to-r from-gray-800 to-gray-900 mt-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="border-2 border-cyan-500/30">
+                            <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold">
+                              {getUserInitials()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-white">
+                              {session?.user?.name || "User"}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              {session?.user?.email || "Welcome!"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 mt-2">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800"
+                          onClick={() => router.push("/profile")}
+                        >
+                          <User className="mr-3 h-4 w-4" />
+                          My Profile
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800"
+                          onClick={handleChangePassword}
+                        >
+                          <KeyRound className="mr-3 h-4 w-4" />
+                          Change Password
+                        </Button>
+
+                        <div className="h-px bg-gray-800 my-2"></div>
+
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="mr-3 h-4 w-4" />
+                          Logout
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <Button
+                      asChild
+                      className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold mt-4"
+                    >
+                      <Link href={auth.login.url}>{auth.login.title}</Link>
+                    </Button>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
@@ -179,90 +429,6 @@ const Navbar = ({
         </div>
       </div>
     </section>
-
-  );
-};
-
-const renderMenuItem = (item: MenuItem) => {
-  if (item.items) {
-    return (
-      <NavigationMenuItem key={item.title}>
-        <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
-        <NavigationMenuContent className="bg-popover text-popover-foreground">
-          {item.items.map((subItem) => (
-            <NavigationMenuLink asChild key={subItem.title} className="w-80">
-              <SubMenuLink item={subItem} />
-            </NavigationMenuLink>
-          ))}
-        </NavigationMenuContent>
-      </NavigationMenuItem>
-    );
-  }
-
-  // Render specific menu items as plain white links (no button styling)
-  if (item.title === "Browse Tutors" || item.title === "Become a Tutor") {
-    return (
-      <div key={item.title} className="px-3 py-1">
-        <Link href={item.url} className="text-white text-sm font-medium">
-          {item.title}
-        </Link>
-      </div>
-    );
-  }
-
-  return (
-    <NavigationMenuItem key={item.title}>
-      <NavigationMenuLink
-        href={item.url}
-        className={
-          "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium"
-        }
-      >
-        {item.title}
-      </NavigationMenuLink>
-    </NavigationMenuItem>
-  );
-};
-
-const renderMobileMenuItem = (item: MenuItem) => {
-  if (item.items) {
-    return (
-      <AccordionItem key={item.title} value={item.title} className="border-b-0">
-        <AccordionTrigger className="text-md py-0 font-semibold ">
-          {item.title}
-        </AccordionTrigger>
-        <AccordionContent className="mt-2">
-          {item.items.map((subItem) => (
-            <SubMenuLink key={subItem.title} item={subItem} />
-          ))}
-        </AccordionContent>
-      </AccordionItem>
-    );
-  }
-
-  return (
-    <a key={item.title} href={item.url} className="text-md font-semibold">
-      {item.title}
-    </a>
-  );
-};
-
-const SubMenuLink = ({ item }: { item: MenuItem }) => {
-  return (
-    <a
-      className="flex min-w-80 flex-row gap-4 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none"
-      href={item.url}
-    >
-      <div className="text-foreground">{item.icon}</div>
-      <div>
-        <div className="text-sm font-semibold">{item.title}</div>
-        {item.description && (
-          <p className="text-sm leading-snug text-muted-foreground">
-            {item.description}
-          </p>
-        )}
-      </div>
-    </a>
   );
 };
 
