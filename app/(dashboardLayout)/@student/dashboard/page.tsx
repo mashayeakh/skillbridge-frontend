@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function StudentDashboard() {
+export default function StudentPage() {
     return (
         <div>
             Welcome to the student dashboard!!

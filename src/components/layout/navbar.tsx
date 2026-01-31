@@ -80,6 +80,8 @@ const Navbar = ({
   className,
 }: Navbar1Props) => {
   const router = useRouter();
+
+
   const { data: session, refetch } = useSession();
   const isLoggedIn = !!session;
   const [isSpeedDialOpen, setIsSpeedDialOpen] = useState(false);
@@ -235,18 +237,18 @@ const Navbar = ({
 
                       <div className="space-y-1 mt-3">
                         {/* dashboard */}
-                        <button
-                          onClick={() => {
-                            setIsSpeedDialOpen(false);
-                            router.push("/student");
-                          }}
+                        <Link href="/dashboard"
+                          // onClick={() => {
+                          //   setIsSpeedDialOpen(false);
+                          //   router.push("/student");
+                          // }}
                           className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors group"
                         >
                           <div className="p-2 rounded-full bg-gray-800 group-hover:bg-cyan-900/30 transition-colors">
                             <LayoutDashboard className="h-4 w-4 text-cyan-400" />
                           </div>
                           <span className="font-medium">Dashboard</span>
-                        </button>
+                        </Link>
 
                         {/* Profile Option */}
 

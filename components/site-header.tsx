@@ -2,6 +2,11 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 
+import { House, house, LayoutDashboard } from "lucide-react";
+import Link from "next/link";
+
+
+
 export function SiteHeader() {
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -14,14 +19,13 @@ export function SiteHeader() {
         <h1 className="text-base font-medium">Documents</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
-            <a
-              href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard"
+            <Link
+              href={process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000"}
               rel="noopener noreferrer"
-              target="_blank"
               className="dark:text-foreground"
             >
-              GitHub
-            </a>
+              <House className="h-4 w-4 text-black" />
+            </Link>
           </Button>
         </div>
       </div>
