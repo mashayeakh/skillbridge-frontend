@@ -5,7 +5,7 @@ import WorkingProcessPage from '@/components/modules/homepage/working-process';
 import TutorTesimonials from '@/components/modules/homepage/tutorList';
 import TestimonialPage from '@/components/modules/homepage/testimonials';
 import { Footer2 } from '@/src/components/footer2';
-import { Navbar } from '@/src/components/layout/navbar';
+// import { Navbar } from '@/src/components/layout/navbar';
 
 export default function HomePage() {
     return (

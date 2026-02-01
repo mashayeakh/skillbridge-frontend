@@ -62,6 +62,8 @@ import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Navbar } from "@/src/components/layout/navbar";
+// import Navbar from "@/src/components/layout/navbar";
+// import { Navbar } from "@/src/components/layout/navbar";
 // import { Toaster } from "react-hot-toast";
 // import { SmoothScroll } from "@/components/smooth-scroll";
 
