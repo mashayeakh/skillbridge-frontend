@@ -20,8 +20,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const { data: session } = authClient.useSession();
-  const hideNavbar = !!session?.user?.role;
+  // const { data: session } = authClient.useSession();
+  // const hideNavbar = !!session?.user?.role;
 
   return (
     <html lang="en" className="scroll-smooth">

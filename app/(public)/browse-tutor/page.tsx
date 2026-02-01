@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { BrowseTutors } from "@/components/modules/browsetutors/browseTutors"
+import { BrowseTutors } from "@/app/(public)/browsetutors/browseTutors"
 
 export default function BrowseTutorPage() {
     const [tutors, setTutors] = useState([])

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { authClient } from "../../lib/auth-clients";
+// import { Session } from "inspector/promises";
 
 interface MenuItem {
   title: string;
@@ -53,13 +54,14 @@ const Navbar = ({
   menu = [
     { title: "Browse Tutors", url: "/browse-tutor" },
     { title: "Become a Tutor", url: "/become-tutor" },
-    { title: "Dashboard", url: "/dashboard" },
   ],
 }: NavbarProps) => {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
   const user = session?.user;
+
+  console.log("ss", session)
 
   const initials = user?.name
     ?.split(" ")
@@ -71,6 +73,8 @@ const Navbar = ({
     await authClient.signOut();
     router.push("/login");
   };
+
+  console.log("SEE", session)
 
   return (
     <section

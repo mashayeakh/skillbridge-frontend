@@ -6,6 +6,7 @@ import "../globals.css";
 import { Toaster } from "sonner";
 import { Navbar } from "@/src/components/layout/navbar";
 import { authClient } from "@/src/lib/auth-clients";
+import { Footer2 } from "@/src/components/footer2";
 
 const fraunces = Fraunces({
     variable: "--font-serif",
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {/* {!hideNavbar && <Navbar />} */}
                 <Navbar />
                 {children}
+                <Footer2 />
                 <Toaster richColors position="top-center" />
             </body>
         </html>
