@@ -73,6 +73,7 @@ const Navbar = ({
   menu = [
     { title: "Browse Tutors", url: "/browse-tutor" },
     { title: "Become a Tutor", url: "/become-tutor" },
+    { title: "Dashboard", url: "/dashboard" },
   ],
   auth = {
     login: { title: "Login", url: "/login" },
@@ -82,12 +83,12 @@ const Navbar = ({
   const router = useRouter();
 
 
-  const { data: session, refetch } = useSession();
-  const isLoggedIn = !!session;
+  // const { data: session, refetch } = useSession();
+  // const isLoggedIn = !!session;
   const [isSpeedDialOpen, setIsSpeedDialOpen] = useState(false);
   const speedDialRef = useRef<HTMLDivElement>(null);
 
-  console.log("sessiotn ", session?.user?.name)
+  // console.log("sessiotn ", session?.user?.name)
 
   // Close speed dial when clicking outside
   useEffect(() => {
@@ -111,7 +112,7 @@ const Navbar = ({
     try {
       await logoutUser();
       toast.success("Logged out successfully");
-      await refetch();
+      // await refetch();
       setIsSpeedDialOpen(false);
       router.push("/");
     } catch (err) {
@@ -127,14 +128,14 @@ const Navbar = ({
   };
 
   // Get user initials for avatar
-  const getUserInitials = () => {
-    if (!session?.user?.name) return "U";
-    const names = session?.user?.name.split(" ");
-    if (names.length >= 2) {
-      return `${names[0][0]}${names[1][0]}`.toUpperCase();
-    }
-    return session?.user?.name.charAt(0).toUpperCase();
-  };
+  // const getUserInitials = () => {
+  //   if (!session?.user?.name) return "U";
+  //   const names = session?.user?.name.split(" ");
+  //   if (names.length >= 2) {
+  //     return `${names[0][0]}${names[1][0]}`.toUpperCase();
+  //   }
+  //   return session?.user?.name.charAt(0).toUpperCase();
+  // };
 
   return (
     <section className={cn("bg-gradient-to-r from-gray-900 to-gray-800 shadow-lg", className)}>
@@ -183,133 +184,7 @@ const Navbar = ({
             </NavigationMenu>
           </div>
 
-          <div className="flex items-center gap-4">
-            {!isLoggedIn ? (
-              <Button
-                asChild
-                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-6 py-2 rounded-full transition-all hover:shadow-lg hover:scale-105"
-              >
-                <Link href={auth.login.url}>{auth.login.title}</Link>
-              </Button>
-            ) : (
-              <div className="relative" ref={speedDialRef}>
-                {/* Speed Dial Button */}
-                <button
-                  onClick={() => setIsSpeedDialOpen(!isSpeedDialOpen)}
-                  className="relative group"
-                >
-                  <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full blur opacity-0 group-hover:opacity-30 transition-opacity"></div>
-                  <Avatar className="relative z-10 border-2 border-transparent group-hover:border-cyan-400 transition-all duration-300 hover:scale-105 cursor-pointer">
-                    <AvatarImage
-                      src={session?.user?.image || ""}
-                      alt={session?.user?.name || "User"}
-                    />
-                    <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold">
-                      {getUserInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
 
-                {/* Speed Dial Menu */}
-                {isSpeedDialOpen && (
-                  <div className="absolute right-0 mt-3 w-64 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-5 duration-200">
-                    <div className="p-4">
-                      {/* User Info */}
-                      <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-gray-800 to-gray-900/50">
-                        <Avatar className="border-2 border-cyan-500/30">
-                          <AvatarImage
-                            src={session?.user?.image || ""}
-                            alt={session?.user?.name || "User"}
-                          />
-                          <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold">
-                            {getUserInitials()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold text-white">
-                            {session?.user?.name}
-                          </p>
-                          <p className="text-sm text-gray-400 truncate max-w-[180px]">
-                            {session?.user?.email || "Welcome!"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1 mt-3">
-                        {/* dashboard */}
-                        <Link href="/dashboard"
-                          // onClick={() => {
-                          //   setIsSpeedDialOpen(false);
-                          //   router.push("/student");
-                          // }}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors group"
-                        >
-                          <div className="p-2 rounded-full bg-gray-800 group-hover:bg-cyan-900/30 transition-colors">
-                            <LayoutDashboard className="h-4 w-4 text-cyan-400" />
-                          </div>
-                          <span className="font-medium">Dashboard</span>
-                        </Link>
-
-                        {/* Profile Option */}
-
-                        <button
-                          onClick={() => {
-                            setIsSpeedDialOpen(false);
-                            router.push("/profile");
-                          }}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors group"
-                        >
-                          <div className="p-2 rounded-full bg-gray-800 group-hover:bg-cyan-900/30 transition-colors">
-                            <User className="h-4 w-4 text-cyan-400" />
-                          </div>
-                          <span className="font-medium">My Profile</span>
-                        </button>
-
-                        {/* Change Password Option */}
-                        <button
-                          onClick={handleChangePassword}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors group"
-                        >
-                          <div className="p-2 rounded-full bg-gray-800 group-hover:bg-amber-900/30 transition-colors">
-                            <KeyRound className="h-4 w-4 text-amber-400" />
-                          </div>
-                          <span className="font-medium">Change Password</span>
-                        </button>
-
-                        {/* Settings Option */}
-                        <button
-                          onClick={() => {
-                            setIsSpeedDialOpen(false);
-                            router.push("/settings");
-                          }}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors group"
-                        >
-                          <div className="p-2 rounded-full bg-gray-800 group-hover:bg-purple-900/30 transition-colors">
-                            <Settings className="h-4 w-4 text-purple-400" />
-                          </div>
-                          <span className="font-medium">Settings</span>
-                        </button>
-
-                        {/* Divider */}
-                        <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent my-2"></div>
-
-                        {/* Logout Option */}
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors group"
-                        >
-                          <div className="p-2 rounded-full bg-red-900/20 group-hover:bg-red-900/40 transition-colors">
-                            <LogOut className="h-4 w-4" />
-                          </div>
-                          <span className="font-medium">Logout</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
         </nav>
 
         {/* Mobile */}
@@ -365,65 +240,7 @@ const Navbar = ({
                   </div>
 
                   {/* User Section for Mobile */}
-                  {isLoggedIn ? (
-                    <>
-                      <div className="p-4 rounded-lg bg-gradient-to-r from-gray-800 to-gray-900 mt-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="border-2 border-cyan-500/30">
-                            <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold">
-                              {getUserInitials()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold text-white">
-                              {session?.user?.name || "User"}
-                            </p>
-                            <p className="text-sm text-gray-400">
-                              {session?.user?.email || "Welcome!"}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="space-y-2 mt-2">
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800"
-                          onClick={() => router.push("/profile")}
-                        >
-                          <User className="mr-3 h-4 w-4" />
-                          My Profile
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800"
-                          onClick={handleChangePassword}
-                        >
-                          <KeyRound className="mr-3 h-4 w-4" />
-                          Change Password
-                        </Button>
-
-                        <div className="h-px bg-gray-800 my-2"></div>
-
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                          onClick={handleLogout}
-                        >
-                          <LogOut className="mr-3 h-4 w-4" />
-                          Logout
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <Button
-                      asChild
-                      className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold mt-4"
-                    >
-                      <Link href={auth.login.url}>{auth.login.title}</Link>
-                    </Button>
-                  )}
                 </div>
               </SheetContent>
             </Sheet>
