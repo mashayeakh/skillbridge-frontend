@@ -1,9 +1,9 @@
 import React from 'react'
 
-export default function BecomeTutor() {
+export default function TutorPage() {
     return (
         <div>
-            Become a Tutor
+            This is tutor page
         </div>
     )
 }
