@@ -116,10 +116,12 @@ const Navbar = ({
           <NavigationMenu className="flex-1">
             <NavigationMenuList className="flex items-center gap-1">
               {menu.map((item) => {
-                // Only show "Become a Tutor" if user is STUDENT
-                if (item.title === "Become a Tutor" && user?.role !== "STUDENT") {
-                  return null;
-                }
+                // Hide "Become a Tutor" if not STUDENT
+                if (item.title === "Become a Tutor" && user?.role !== "STUDENT") return null;
+
+                // Hide "Browse Tutors" if role is TUTOR
+                if (item.title === "Browse Tutors" && user?.role === "TUTOR") return null;
+
                 return (
                   <NavigationMenuItem key={item.title}>
                     <Link href={item.url} legacyBehavior passHref>
@@ -259,10 +261,10 @@ const Navbar = ({
                         </Avatar>
                         <div>
                           <p className="font-semibold">{user.name || "User"}</p>
-                          <p className="text-sm text-muted-foreground">{user.role}</p>
+                          <p className="text-sm text-muted-foreground">{user?.role}</p>
                         </div>
                       </div>
-                      {user.role === "STUDENT" && (
+                      {user?.role === "STUDENT" && (
                         <Button className="w-full bg-gradient-to-r from-primary to-primary/80">
                           <BookOpen className="h-4 w-4 mr-2" />
                           Become a Tutor
@@ -275,9 +277,12 @@ const Navbar = ({
 
                   <div className="space-y-1">
                     {menu.map((item) => {
-                      if (item.title === "Become a Tutor" && user?.role !== "STUDENT") {
-                        return null;
-                      }
+                      // Hide "Become a Tutor" if not STUDENT
+                      if (item.title === "Become a Tutor" && user?.role !== "STUDENT") return null;
+
+                      // Hide "Browse Tutors" if TUTOR
+                      if (item.title === "Browse Tutors" && user?.role === "TUTOR") return null;
+
                       return (
                         <Link
                           key={item.title}
