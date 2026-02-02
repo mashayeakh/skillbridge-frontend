@@ -25,3 +25,29 @@ export async function postReq<T>(
 
     return data;
 }
+
+
+
+
+
+//create tutor availability
+// lib/api.ts
+export async function createTutorAvailability(startTime: string, endTime: string) {
+    const res = await fetch(`${BASE_URL}/api/tutor-availability`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include", // important! sends cookies
+        body: JSON.stringify({ startTime, endTime }),
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Something went wrong");
+    }
+
+    return res.json(); // returns created slot
+}
+
+
