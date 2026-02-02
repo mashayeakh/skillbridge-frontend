@@ -337,7 +337,7 @@ export default async function TutorIdPage({ params }: TutorPageProps) {
                             Explore other expert tutors in our platform
                         </CardDescription> */}
                         </CardHeader>
-                        {/* 
+
                         <CardContent>
                             {filteredTutors.length > 0 ? (
                                 <div className="space-y-4">
@@ -350,7 +350,7 @@ export default async function TutorIdPage({ params }: TutorPageProps) {
                                     No other tutors available at the moment
                                 </div>
                             )}
-                        </CardContent> */}
+                        </CardContent>
 
                         {/* <CardFooter className="border-t pt-4">
                             <Button

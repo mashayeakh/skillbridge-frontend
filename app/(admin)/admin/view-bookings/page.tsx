@@ -11,7 +11,7 @@ import {
     DollarSign,
     Star,
     CheckCircle,
-    XCircle,
+    // XCircle,
     Clock,
     User,
     Users,
@@ -31,7 +31,8 @@ import {
     ArrowUpRight,
     ArrowDownRight,
     Plus,
-    Minus
+    Minus,
+    XCircle
 } from "lucide-react";
 
 interface User {
@@ -599,7 +600,7 @@ export default function BookingPage() {
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl p-4 shadow-sm border">
+                        {/* <div className="bg-white rounded-xl p-4 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-red-50 rounded-lg">
                                     <XCircle className="h-5 w-5 text-red-600" />
@@ -609,7 +610,7 @@ export default function BookingPage() {
                                     <div className="text-xl font-bold text-gray-900">{stats.cancelledBookings}</div>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                         <div className="bg-white rounded-xl p-4 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-blue-50 rounded-lg">
@@ -1158,14 +1159,14 @@ export default function BookingPage() {
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex gap-3 mt-6">
+                                {/* <div className="flex gap-3 mt-6">
                                     <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                                         Send Summary
                                     </button>
                                     <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
                                         Contact Student
                                     </button>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>

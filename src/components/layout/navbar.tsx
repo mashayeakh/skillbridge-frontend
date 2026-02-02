@@ -1,7 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Menu, LogIn, LogOut, User, Settings, LayoutDashboard, ChevronDown, Sparkles, BookOpen, GraduationCap, Search, Bell, Home } from "lucide-react";
+import {
+  Menu,
+  LogOut,
+  User,
+  Settings,
+  LayoutDashboard,
+  ChevronDown,
+  Sparkles,
+  BookOpen,
+  GraduationCap,
+  Search,
+  Home,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -34,6 +46,29 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { authClient } from "../../lib/auth-clients";
+
+/* ================= ROLE ROUTES ================= */
+
+const ROLE_ROUTES = {
+  STUDENT: {
+    dashboard: "/dashboard",
+    profile: "/dashboard/profile",
+    bookings: "/dashboard/bookings",
+  },
+  TUTOR: {
+    dashboard: "/tutor/dashboard",
+    profile: "/tutor/profile",
+    availability: "/tutor/availability",
+  },
+  ADMIN: {
+    dashboard: "/admin/dashboard",
+    manageCategory: "/admin/manage-category",
+    viewBookings: "/admin/view-bookings",
+    manageUser: "/admin/manage-user",
+  },
+} as const;
+
+/* ================================================= */
 
 interface MenuItem {
   title: string;
@@ -70,6 +105,8 @@ const Navbar = ({
   const { data: session, isPending } = authClient.useSession();
 
   const user = session?.user;
+  const role = user?.role as "STUDENT" | "TUTOR" | "ADMIN" | undefined;
+  const routes = role ? ROLE_ROUTES[role] : null;
 
   const initials = user?.name
     ?.split(" ")
@@ -83,58 +120,49 @@ const Navbar = ({
   };
 
   return (
-    <header className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60", className)}>
-      {/* Top Announcement Banner */}
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur",
+        className
+      )}
+    >
+      {/* Announcement */}
       <div className="bg-linear-to-r from-primary/90 via-primary/80 to-primary/70 py-2">
         <div className="container mx-auto flex items-center justify-center gap-2">
           <Sparkles className="h-4 w-4 text-white animate-pulse" />
-          <p className="text-sm font-medium text-white text-center">
-            🎉 New: Get 20% off your first session with any tutor!
+          <p className="text-sm font-medium text-white">
+            🎉 New: Get 20% off your first session!
           </p>
-          <Badge variant="secondary" className="ml-2 text-xs">
+          <Badge variant="secondary" className="text-xs">
             Limited Time
           </Badge>
         </div>
       </div>
 
       <div className="container mx-auto px-4 lg:px-8 py-3">
-        {/* Desktop Navigation */}
+        {/* ================= DESKTOP ================= */}
         <nav className="hidden lg:flex items-center justify-between gap-6">
-          {/* Logo Section */}
-          <Link href={logo.url} className="flex items-center gap-3 group">
-            <div className="p-2 bg-linear-to-br from-primary to-primary/80 rounded-lg group-hover:scale-105 transition-transform">
+          {/* Logo */}
+          <Link href={logo.url} className="flex items-center gap-3">
+            <div className="p-2 bg-primary rounded-lg">
               <img src={logo.src} alt={logo.alt} className="h-6 w-6 invert" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                {logo.title}
-              </span>
-              <span className="text-xs text-muted-foreground">Learn Anything, Anytime</span>
-            </div>
+            <span className="text-xl font-bold">{logo.title}</span>
           </Link>
 
-          {/* Main Navigation Menu */}
+          {/* Menu */}
           <NavigationMenu className="flex-1">
-            <NavigationMenuList className="flex items-center gap-1">
+            <NavigationMenuList>
               {menu.map((item) => {
-                // Hide "Become a Tutor" if not STUDENT
-                if (item.title === "Become a Tutor" && user?.role !== "STUDENT") return null;
-
-                // Hide "Browse Tutors" if role is TUTOR
-                if (item.title === "Browse Tutors" && user?.role === "TUTOR") return null;
+                if (item.title === "Become a Tutor" && role !== "STUDENT") return null;
+                if (item.title === "Browse Tutors" && (role === "TUTOR" || role === "ADMIN")) return null;
 
                 return (
                   <NavigationMenuItem key={item.title}>
                     <Link href={item.url} passHref>
-                      <NavigationMenuLink className={cn(
-                        "group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors",
-                        "hover:bg-accent hover:text-accent-foreground",
-                        "data-[active]:bg-accent data-[active]:text-accent-foreground"
-                      )}>
-                        <span className="flex items-center gap-2">
-                          {item.icon}
-                          {item.title}
-                        </span>
+                      <NavigationMenuLink className="px-4 py-2 flex items-center gap-2">
+                        {item.icon}
+                        {item.title}
                       </NavigationMenuLink>
                     </Link>
                   </NavigationMenuItem>
@@ -143,247 +171,186 @@ const Navbar = ({
             </NavigationMenuList>
           </NavigationMenu>
 
-          {/* Right Side Actions */}
-          <div className="flex items-center gap-4">
-            {!isPending && user ? (
-              <div className="flex items-center gap-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 px-2 rounded-full">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8 border-2 border-primary/20">
-                          <AvatarImage src={user.image || ""} alt={user.name || ""} />
-                          <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white font-semibold">
-                            {initials || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="hidden lg:block text-left">
-                          <p className="text-sm font-semibold">{user.name || "User"}</p>
-                          <p className="text-xs text-muted-foreground">{user.role}</p>
-                        </div>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
-                        <p className="text-xs leading-none text-muted-foreground">{user.email || "student@example.com"}</p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard" className="cursor-pointer">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          Dashboard
-                          <Badge variant="outline" className="ml-auto text-xs">New</Badge>
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem asChild>
-                        <Link href="/profile" className="cursor-pointer">
-                          <User className="mr-2 h-4 w-4" />
-                          My Profile
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem asChild>
-                        <Link href="/bookings" className="cursor-pointer">
-                          <BookOpen className="mr-2 h-4 w-4" />
-                          My Bookings
-                          <Badge className="ml-auto bg-primary text-primary-foreground">3</Badge>
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem asChild>
-                      <Link href="/settings" className="cursor-pointer">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Settings
-                      </Link>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 cursor-pointer">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Log out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Link href="/login">
-                  <Button variant="ghost" className="hidden lg:flex">
-                    Sign In
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </nav>
-
-        {/* Mobile Navigation */}
-        <div className="lg:hidden flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
+          {/* Right */}
+          {!isPending && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-10 px-2 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.image || ""} />
+                    <AvatarFallback>{initials || "U"}</AvatarFallback>
+                  </Avatar>
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
-              </SheetTrigger>
+              </DropdownMenuTrigger>
 
-              <SheetContent side="left" className="w-[300px] sm:w-[350px]">
-                <SheetHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-primary to-primary/80 rounded-lg">
-                      <img src={logo.src} alt={logo.alt} className="h-6 w-6 invert" />
-                    </div>
-                    <SheetTitle className="text-lg">{logo.title}</SheetTitle>
-                  </div>
-                </SheetHeader>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <p className="font-medium">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
 
-                <div className="mt-8 space-y-2">
-                  {user && (
-                    <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.image || ""} />
-                          <AvatarFallback className="bg-primary text-white">
-                            {initials || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold">{user.name || "User"}</p>
-                          <p className="text-sm text-muted-foreground">{user?.role}</p>
-                        </div>
-                      </div>
-                      {user?.role === "STUDENT" && (
-                        <Button className="w-full bg-gradient-to-r from-primary to-primary/80">
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          Become a Tutor
-                        </Button>
-                      )}
-                    </div>
-                  )}
-
-                  <Separator />
-
-                  <div className="space-y-1">
-                    {menu.map((item) => {
-                      // Hide "Become a Tutor" if not STUDENT
-                      if (item.title === "Become a Tutor" && user?.role !== "STUDENT") return null;
-
-                      // Hide "Browse Tutors" if TUTOR
-                      if (item.title === "Browse Tutors" && user?.role === "TUTOR") return null;
-
-                      return (
-                        <Link
-                          key={item.title}
-                          href={item.url}
-                          className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent transition-colors"
-                        >
-                          {item.icon}
-                          <span>{item.title}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-
-                  <Separator />
-
-                  {user ? (
-                    <div className="space-y-1">
-                      <Link
-                        href="/dashboard"
-                        className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
+                <DropdownMenuGroup>
+                  {routes?.dashboard && (
+                    <DropdownMenuItem asChild>
+                      <Link href={routes.dashboard}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
                         Dashboard
                       </Link>
-
-                      <Link
-                        href="/profile"
-                        className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <User className="h-4 w-4" />
-                        Profile
-                      </Link>
-
-                      <Link
-                        href="/bookings"
-                        className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <BookOpen className="h-4 w-4" />
-                        My Bookings
-                      </Link>
-
-                      <Link
-                        href="/settings"
-                        className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <Settings className="h-4 w-4" />
-                        Settings
-                      </Link>
-
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent transition-colors text-red-600 w-full"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Log out
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 pt-4">
-                      <Link href="/login" className="w-full">
-                        <Button variant="outline" className="w-full">
-                          Sign In
-                        </Button>
-                      </Link>
-
-                      <Link href="/signup" className="w-full">
-                        <Button className="w-full bg-gradient-to-r from-primary to-primary/80">
-                          Get Started Free
-                        </Button>
-                      </Link>
-                    </div>
+                    </DropdownMenuItem>
                   )}
-                </div>
-              </SheetContent>
-            </Sheet>
 
-            <Link href={logo.url} className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-primary to-primary/80 rounded-lg">
-                <img src={logo.src} alt={logo.alt} className="h-5 w-5 invert" />
-              </div>
-              <span className="text-lg font-bold">{logo.title}</span>
+                  {role === "STUDENT" && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href={routes.bookings!}>
+                          <BookOpen className="mr-2 h-4 w-4" />
+                          My Bookings
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={routes.profile!}>
+                          <User className="mr-2 h-4 w-4" />
+                          Profile
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                  {role === "TUTOR" && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href={routes.availability!}>
+                          <BookOpen className="mr-2 h-4 w-4" />
+                          Availability
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={routes.profile!}>
+                          <User className="mr-2 h-4 w-4" />
+                          Profile
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                  {role === "ADMIN" && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href={routes.manageCategory!}>
+                          <Settings className="mr-2 h-4 w-4" />
+                          Manage Categories
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={routes.viewBookings!}>
+                          <BookOpen className="mr-2 h-4 w-4" />
+                          View Bookings
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={routes.manageUser!}>
+                          <User className="mr-2 h-4 w-4" />
+                          User Management
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuGroup>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href="/login">
+              <Button variant="outline">Sign In</Button>
             </Link>
-          </div>
+          )}
+        </nav>
 
-          <div className="flex items-center gap-2">
-            {user ? (
-              <Avatar className="h-8 w-8 border-2 border-primary/20">
-                <AvatarImage src={user.image || ""} />
-                <AvatarFallback className="bg-primary text-white text-xs">
-                  {initials || "U"}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <Link href="/login">
-                <Button size="sm" variant="outline">
-                  Sign In
-                </Button>
-              </Link>
-            )}
-          </div>
+        {/* ================= MOBILE ================= */}
+        <div className="lg:hidden flex items-center justify-between">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent side="left">
+              <SheetHeader>
+                <SheetTitle>{logo.title}</SheetTitle>
+              </SheetHeader>
+
+              <div className="mt-6 space-y-2">
+                {user && routes && (
+                  <>
+                    <Link href={routes.dashboard} className="flex gap-3 px-3 py-2">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Dashboard
+                    </Link>
+
+                    {role === "STUDENT" && (
+                      <>
+                        <Link href={routes.bookings!} className="flex gap-3 px-3 py-2">
+                          <BookOpen className="h-4 w-4" />
+                          My Bookings
+                        </Link>
+                        <Link href={routes.profile!} className="flex gap-3 px-3 py-2">
+                          <User className="h-4 w-4" />
+                          Profile
+                        </Link>
+                      </>
+                    )}
+
+                    {role === "TUTOR" && (
+                      <>
+                        <Link href={routes.availability!} className="flex gap-3 px-3 py-2">
+                          <BookOpen className="h-4 w-4" />
+                          Availability
+                        </Link>
+                        <Link href={routes.profile!} className="flex gap-3 px-3 py-2">
+                          <User className="h-4 w-4" />
+                          Profile
+                        </Link>
+                      </>
+                    )}
+
+                    {role === "ADMIN" && (
+                      <>
+                        <Link href={routes.manageCategory!} className="flex gap-3 px-3 py-2">
+                          <Settings className="h-4 w-4" />
+                          Manage Categories
+                        </Link>
+                        <Link href={routes.viewBookings!} className="flex gap-3 px-3 py-2">
+                          <BookOpen className="h-4 w-4" />
+                          View Bookings
+                        </Link>
+                        <Link href={routes.manageUser!} className="flex gap-3 px-3 py-2">
+                          <User className="h-4 w-4" />
+                          User Management
+                        </Link>
+                      </>
+                    )}
+
+                    <Separator />
+                    <button
+                      onClick={handleLogout}
+                      className="flex gap-3 px-3 py-2 text-red-600"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Log out
+                    </button>
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
