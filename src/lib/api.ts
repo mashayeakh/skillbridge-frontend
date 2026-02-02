@@ -74,3 +74,23 @@ export async function apiDelete(endpoint: string) {
     return await res.json();
 }
 
+// client/api/bookings.ts
+export async function getAllBookings() {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/bookings`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        credentials: "include",
+    });
+
+    console.log("RRR", res)
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch bookings");
+    }
+
+    const data = await res.json();
+    return data.data; // array of bookings
+}

@@ -19,6 +19,11 @@ export function AdminDashboardSidebar() {
             icon: Calendar,
         },
         {
+            name: "View Bookings",
+            href: "/admin/view-bookings",
+            icon: User,
+        },
+        {
             name: "User Management",
             href: "/admin/manage-user",
             icon: User,

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Menu, LogIn, LogOut, User, Settings, LayoutDashboard, ChevronDown, Sparkles, BookOpen, GraduationCap, Search, Bell, Home } from "lucide-react";
@@ -82,9 +83,9 @@ const Navbar = ({
   };
 
   return (
-    <header className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", className)}>
+    <header className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60", className)}>
       {/* Top Announcement Banner */}
-      <div className="bg-gradient-to-r from-primary/90 via-primary/80 to-primary/70 py-2">
+      <div className="bg-linear-to-r from-primary/90 via-primary/80 to-primary/70 py-2">
         <div className="container mx-auto flex items-center justify-center gap-2">
           <Sparkles className="h-4 w-4 text-white animate-pulse" />
           <p className="text-sm font-medium text-white text-center">
@@ -101,7 +102,7 @@ const Navbar = ({
         <nav className="hidden lg:flex items-center justify-between gap-6">
           {/* Logo Section */}
           <Link href={logo.url} className="flex items-center gap-3 group">
-            <div className="p-2 bg-gradient-to-br from-primary to-primary/80 rounded-lg group-hover:scale-105 transition-transform">
+            <div className="p-2 bg-linear-to-br from-primary to-primary/80 rounded-lg group-hover:scale-105 transition-transform">
               <img src={logo.src} alt={logo.alt} className="h-6 w-6 invert" />
             </div>
             <div className="flex flex-col">
