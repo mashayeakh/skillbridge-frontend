@@ -923,9 +923,9 @@ export default function BookingPage() {
                                                             >
                                                                 <Eye size={16} />
                                                             </button>
-                                                            <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                                            {/* <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                                                 <MoreVertical size={16} />
-                                                            </button>
+                                                            </button> */}
                                                         </div>
                                                     </td>
                                                 </tr>

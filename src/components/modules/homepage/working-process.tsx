@@ -3,8 +3,13 @@ import { Button } from "../../ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import HowItWorks from "../../HowItWorks";
+// import { authClient } from "@/src/lib/api/auth-client";
+import { authClient } from '@/src/lib/auth-clients';
 
 export default function WorkingProcessPage() {
+
+
+
     return (
         <>
             <section className="bg-[#F5F7FA] py-12">
@@ -19,11 +24,11 @@ export default function WorkingProcessPage() {
                     <div className="mt-8 flex flex-col gap-4 sm:flex-row justify-center">
                         <HowItWorks />
                     </div>
-                    <Button className="">
+                    {/* <Button className="">
                         <Link href="/register">
                             Sign up
                         </Link>
-                    </Button>
+                    </Button> */}
                 </div>
             </section>
 

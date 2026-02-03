@@ -349,9 +349,9 @@ export default function AdminDashboardPage() {
                                 <div className="text-sm text-gray-500">
                                     Page {currentPage} of {totalPages}
                                 </div>
-                                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                                {/* <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                                     Export Data
-                                </button>
+                                </button> */}
                             </div>
                         </div>
                     </div>
@@ -372,9 +372,9 @@ export default function AdminDashboardPage() {
                                     <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                         Join Date
                                     </th>
-                                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    {/* <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                         Actions
-                                    </th>
+                                    </th> */}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -441,9 +441,9 @@ export default function AdminDashboardPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </button>
-                                                <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                                                {/* <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                                     <MoreVertical className="h-4 w-4" />
-                                                </button>
+                                                </button> */}
                                             </div>
                                         </td>
                                     </tr>
@@ -567,14 +567,14 @@ export default function AdminDashboardPage() {
                                     )}
                                 </div>
 
-                                <div className="mt-6 flex gap-3">
+                                {/* <div className="mt-6 flex gap-3">
                                     <button className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                                         Send Message
                                     </button>
                                     <button className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
                                         Edit Profile
                                     </button>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>

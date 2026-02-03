@@ -1,8 +1,12 @@
-import React, { useMemo, useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+// components/browsetutors/filterTutors.tsx
+"use client";
+
+import React, { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
     List,
     Grid,
@@ -19,42 +23,81 @@ import {
     MessageSquare,
     Award,
     Sparkles,
-    Eye
-} from "lucide-react"
-import { Tutor } from "@/types/tutor"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
+    Eye,
+    User,
+    ExternalLink
+} from "lucide-react";
+import { Tutor } from "@/types/tutor";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
 
-type ViewMode = "grid" | "list" | "table"
+type ViewMode = "grid" | "list" | "table";
 
 type FilterTutorsProps = {
-    tutors: Tutor[]
+    tutors: Tutor[];
+}
+
+interface Category {
+    id: string;
+    name: string;
+    description: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export default function FilterTutors({ tutors }: FilterTutorsProps) {
-    const [query, setQuery] = useState("")
-    const [minRating, setMinRating] = useState<number | "">("")
-    const [category, setCategory] = useState("")
-    const [viewMode, setViewMode] = useState<ViewMode>("grid")
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 100])
-    const [availability, setAvailability] = useState<string>("")
+    const router = useRouter();
+    const [query, setQuery] = useState("");
+    const [minRating, setMinRating] = useState<number | "">("");
+    const [category, setCategory] = useState("");
+    const [viewMode, setViewMode] = useState<ViewMode>("grid");
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+    const [availability, setAvailability] = useState<string>("");
+    const [categories, setCategories] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const categories = useMemo(() => {
-        const set = new Set<string>()
-        tutors.forEach((t) => t.categories.forEach((c) => set.add(c)))
-        return Array.from(set)
-    }, [tutors])
+    // Fetch active categories from API
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/public/categories`
+                );
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    // Filter only active categories and map to names
+                    const activeCategories = data.data
+                        .filter((cat: Category) => cat.isActive === true)
+                        .map((cat: Category) => cat.name);
+
+                    setCategories(activeCategories);
+                }
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+                // Fallback to extracting from tutors if API fails
+                const set = new Set<string>();
+                tutors.forEach((t) => t.categories?.forEach((c) => set.add(c)));
+                setCategories(Array.from(set));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCategories();
+    }, [tutors]);
 
     const filtered = useMemo(() => {
         return tutors.filter((t) => {
-            if (query && !t.name.toLowerCase().includes(query.toLowerCase())) return false
-            if (minRating !== "" && t.rating < Number(minRating)) return false
-            if (category && !t.categories.includes(category)) return false
-            if (t.hourlyRate < priceRange[0] || t.hourlyRate > priceRange[1]) return false
-            return true
-        })
-    }, [query, minRating, category, tutors, priceRange])
+            if (query && !t.name.toLowerCase().includes(query.toLowerCase())) return false;
+            if (minRating !== "" && t.rating < Number(minRating)) return false;
+            if (category && !t.categories?.includes(category)) return false;
+            if (t.hourlyRate < priceRange[0] || t.hourlyRate > priceRange[1]) return false;
+            return true;
+        });
+    }, [query, minRating, category, tutors, priceRange]);
 
     const renderRatingStars = (rating: number) => {
         return (
@@ -67,8 +110,18 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                 ))}
                 <span className="ml-1 font-medium">{rating.toFixed(1)}</span>
             </div>
-        )
-    }
+        );
+    };
+
+    const handleViewProfile = (tutorId: string) => {
+        // Navigate to the individual tutor profile page
+        router.push(`/tutors/${tutorId}`);
+    };
+
+    const handleContactTutor = (tutorId: string) => {
+        // You can implement contact functionality here
+        console.log("Contact tutor:", tutorId);
+    };
 
     return (
         <section className="py-6">
@@ -111,14 +164,19 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                     <select
                                         value={category}
                                         onChange={(e) => setCategory(e.target.value)}
-                                        className="h-10 rounded-lg border border-input bg-background pl-10 pr-8 py-2 text-sm"
+                                        disabled={loading}
+                                        className="h-10 rounded-lg border border-input bg-background pl-10 pr-8 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <option value="">All subjects</option>
-                                        {categories.map((c) => (
-                                            <option key={c} value={c}>
-                                                {c}
-                                            </option>
-                                        ))}
+                                        {loading ? (
+                                            <option value="" disabled>Loading categories...</option>
+                                        ) : (
+                                            categories.map((c) => (
+                                                <option key={c} value={c}>
+                                                    {c}
+                                                </option>
+                                            ))
+                                        )}
                                     </select>
                                 </div>
 
@@ -160,10 +218,10 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                    setQuery("")
-                                    setMinRating("")
-                                    setCategory("")
-                                    setPriceRange([0, 100])
+                                    setQuery("");
+                                    setMinRating("");
+                                    setCategory("");
+                                    setPriceRange([0, 100]);
                                 }}
                                 className="text-sm"
                             >
@@ -177,7 +235,7 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                 {viewMode === "grid" && (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {filtered.map((t) => (
-                            <Card key={t.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+                            <Card key={t.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden cursor-pointer">
                                 <CardHeader className="p-0">
                                     <div className="relative h-48 bg-gradient-to-br from-primary/10 to-primary/5">
                                         <Avatar className="absolute -bottom-8 left-6 h-20 w-20 border-4 border-background shadow-lg">
@@ -196,7 +254,14 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                 <CardContent className="pt-10">
                                     <div className="space-y-3">
                                         <div>
-                                            <CardTitle className="text-lg">{t.name}</CardTitle>
+                                            <CardTitle className="text-lg hover:text-primary transition-colors">
+                                                <button
+                                                    onClick={() => handleViewProfile(t.id)}
+                                                    className="text-left hover:underline"
+                                                >
+                                                    {t.name}
+                                                </button>
+                                            </CardTitle>
                                             <CardDescription className="flex items-center gap-1 mt-1">
                                                 <MapPin className="h-3 w-3" />
                                                 Available Online
@@ -206,12 +271,12 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                         {renderRatingStars(t.rating)}
 
                                         <div className="flex flex-wrap gap-2">
-                                            {t.categories.slice(0, 3).map((cat, index) => (
+                                            {t.categories?.slice(0, 3).map((cat, index) => (
                                                 <Badge key={index} variant="secondary" className="text-xs">
                                                     {cat}
                                                 </Badge>
                                             ))}
-                                            {t.categories.length > 3 && (
+                                            {t.categories && t.categories.length > 3 && (
                                                 <Badge variant="outline" className="text-xs">
                                                     +{t.categories.length - 3}
                                                 </Badge>
@@ -226,10 +291,21 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                         </div>
                                     </div>
                                 </CardContent>
-                                <CardFooter className="border-t p-4">
-                                    <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                <CardFooter className="border-t p-4 flex gap-2">
+                                    <Button
+                                        className="flex-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                                        onClick={() => handleContactTutor(t.id)}
+                                    >
                                         <MessageSquare className="h-4 w-4 mr-2" />
-                                        Contact Tutor
+                                        Contact
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={() => handleViewProfile(t.id)}
+                                    >
+                                        <Eye className="h-4 w-4 mr-2" />
+                                        View Profile
                                     </Button>
                                 </CardFooter>
                             </Card>
@@ -253,7 +329,14 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                         <div className="flex-1">
                                             <div className="flex items-start justify-between mb-2">
                                                 <div>
-                                                    <h3 className="text-lg font-semibold">{t.name}</h3>
+                                                    <h3 className="text-lg font-semibold hover:text-primary transition-colors">
+                                                        <button
+                                                            onClick={() => handleViewProfile(t.id)}
+                                                            className="text-left hover:underline"
+                                                        >
+                                                            {t.name}
+                                                        </button>
+                                                    </h3>
                                                     <div className="flex items-center gap-4 mt-1">
                                                         {renderRatingStars(t.rating)}
                                                         <div className="flex items-center gap-1">
@@ -272,7 +355,7 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                             <p className="text-muted-foreground mb-3 line-clamp-2">{t.bio}</p>
 
                                             <div className="flex flex-wrap gap-2 mb-4">
-                                                {t.categories.map((cat, index) => (
+                                                {t.categories?.map((cat, index) => (
                                                     <Badge key={index} variant="outline" className="text-xs">
                                                         {cat}
                                                     </Badge>
@@ -280,13 +363,13 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                             </div>
 
                                             <div className="flex items-center gap-4">
-                                                <Button size="sm" variant="default">
+                                                <Button size="sm" variant="default" onClick={() => handleContactTutor(t.id)}>
                                                     <MessageSquare className="h-4 w-4 mr-2" />
                                                     Message
                                                 </Button>
-                                                <Button size="sm" variant="outline">
+                                                <Button size="sm" variant="outline" onClick={() => handleViewProfile(t.id)}>
                                                     <Eye className="h-4 w-4 mr-2" />
-                                                    View Profile
+                                                    View Full Profile
                                                 </Button>
                                             </div>
                                         </div>
@@ -308,7 +391,6 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                             <th className="text-left p-4 font-semibold">Rating</th>
                                             <th className="text-left p-4 font-semibold">Rate</th>
                                             <th className="text-left p-4 font-semibold">Subjects</th>
-                                            <th className="text-left p-4 font-semibold">Availability</th>
                                             <th className="text-left p-4 font-semibold">Actions</th>
                                         </tr>
                                     </thead>
@@ -322,7 +404,12 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                                             <AvatarFallback>{t.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                                                         </Avatar>
                                                         <div>
-                                                            <div className="font-medium">{t.name}</div>
+                                                            <button
+                                                                onClick={() => handleViewProfile(t.id)}
+                                                                className="font-medium hover:text-primary hover:underline"
+                                                            >
+                                                                {t.name}
+                                                            </button>
                                                             <div className="text-sm text-muted-foreground line-clamp-1">{t.bio.substring(0, 50)}...</div>
                                                         </div>
                                                     </div>
@@ -335,12 +422,12 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                                 </td>
                                                 <td className="p-4">
                                                     <div className="flex flex-wrap gap-1">
-                                                        {t.categories.slice(0, 2).map((cat, index) => (
+                                                        {t.categories?.slice(0, 2).map((cat, index) => (
                                                             <Badge key={index} variant="secondary" className="text-xs">
                                                                 {cat}
                                                             </Badge>
                                                         ))}
-                                                        {t.categories.length > 2 && (
+                                                        {t.categories && t.categories.length > 2 && (
                                                             <span className="text-xs text-muted-foreground">
                                                                 +{t.categories.length - 2} more
                                                             </span>
@@ -348,15 +435,15 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                                     </div>
                                                 </td>
                                                 <td className="p-4">
-                                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                                        <Calendar className="h-4 w-4" />
-                                                        Flexible
+                                                    <div className="flex gap-2">
+                                                        <Button size="sm" variant="outline" onClick={() => handleContactTutor(t.id)}>
+                                                            Contact
+                                                        </Button>
+                                                        <Button size="sm" variant="default" onClick={() => handleViewProfile(t.id)}>
+                                                            <ExternalLink className="h-3 w-3 mr-1" />
+                                                            View
+                                                        </Button>
                                                     </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <Button size="sm" variant="outline">
-                                                        Contact
-                                                    </Button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -380,10 +467,10 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                             </p>
                             <Button
                                 onClick={() => {
-                                    setQuery("")
-                                    setMinRating("")
-                                    setCategory("")
-                                    setPriceRange([0, 100])
+                                    setQuery("");
+                                    setMinRating("");
+                                    setCategory("");
+                                    setPriceRange([0, 100]);
                                 }}
                             >
                                 Clear all filters
@@ -393,5 +480,5 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                 )}
             </div>
         </section>
-    )
+    );
 }

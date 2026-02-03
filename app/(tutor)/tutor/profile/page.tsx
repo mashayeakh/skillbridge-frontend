@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,6 +8,10 @@ import { toast } from "sonner";
 interface Category {
     id: string;
     name: string;
+    description: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
 interface TutorProfile {
@@ -15,6 +20,10 @@ interface TutorProfile {
     bio: string;
     hourlyRate: number;
     experienceYears: number;
+    rating: number | null;
+    userId: string;
+    createdAt: string;
+    updatedAt: string;
     categories?: Array<{
         category: Category;
     }>;
@@ -47,10 +56,13 @@ export default function CreateTutorProfilePage() {
     // Load profile & categories
     useEffect(() => {
         const initializeData = async () => {
+            setLoading(true);
             try {
                 await Promise.all([loadProfile(), loadCategories()]);
             } catch (error) {
                 console.error("Failed to initialize data:", error);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -76,10 +88,13 @@ export default function CreateTutorProfilePage() {
             }
 
             if (!res.ok) {
-                throw new Error(`Failed to load profile: ${res.status}`);
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.message || `Failed to load profile: ${res.status}`);
             }
 
             const data = await res.json();
+            console.log("Profile loaded:", data);
+
             if (data.data) {
                 setProfile(data.data);
                 // Pre-fill form with existing data if editing is allowed
@@ -92,16 +107,20 @@ export default function CreateTutorProfilePage() {
             }
         } catch (err: any) {
             console.error("Load profile error:", err);
-            toast.error(err.message || "Error loading profile");
+            // Don't show error if it's just 404 (no profile exists)
+            if (!err.message?.includes("404")) {
+                toast.error(err.message || "Error loading profile");
+            }
         }
     };
 
     const loadCategories = async () => {
         try {
+            console.log("Fetching categories from:", `${process.env.NEXT_PUBLIC_BACKEND_URL}/public/categories`);
+
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/categories`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/public/categories`,
                 {
-                    credentials: "include",
                     headers: {
                         'Content-Type': 'application/json',
                     }
@@ -113,10 +132,20 @@ export default function CreateTutorProfilePage() {
             }
 
             const data = await res.json();
-            setCategories(data.data || []);
+            console.log("Categories API response:", data);
+
+            if (data.success && data.data) {
+                // Filter only active categories
+                const activeCategories = data.data.filter((cat: Category) => cat.isActive === true);
+                console.log("Active categories:", activeCategories);
+                setCategories(activeCategories || []);
+            } else {
+                setCategories([]);
+            }
         } catch (err: any) {
             console.error("Load categories error:", err);
             toast.error(err.message || "Failed to load categories");
+            setCategories([]);
         }
     };
 
@@ -168,28 +197,33 @@ export default function CreateTutorProfilePage() {
         setError("");
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor`, {
+            const profileData = {
+                name: formData.name.trim(),
+                bio: formData.bio.trim(),
+                hourlyRate: Number(formData.hourlyRate),
+                experienceYears: Number(formData.experienceYears),
+            };
+
+            console.log("Creating profile with data:", profileData);
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/profile`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 credentials: "include",
-                body: JSON.stringify({
-                    name: formData.name.trim(),
-                    bio: formData.bio.trim(),
-                    hourlyRate: Number(formData.hourlyRate),
-                    experienceYears: Number(formData.experienceYears),
-                }),
+                body: JSON.stringify(profileData),
             });
 
             const data = await res.json();
+            console.log("Profile creation response:", data);
 
             if (!res.ok) {
                 throw new Error(data.message || `Failed to create profile: ${res.status}`);
             }
 
             setProfile(data.data || data);
-            toast.success("Profile created successfully!");
+            toast.success(data.message || "Profile created successfully!");
 
             // Refresh categories to ensure they're up to date
             await loadCategories();
@@ -225,25 +259,30 @@ export default function CreateTutorProfilePage() {
         setSubmittingCategory(true);
 
         try {
+            const categoryData = {
+                tutorProfileId: profile.id,
+                categoryId: selectedCategory,
+            };
+
+            console.log("Assigning category with data:", categoryData);
+
             const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor-category`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 credentials: "include",
-                body: JSON.stringify({
-                    tutorProfileId: profile.id,
-                    categoryId: selectedCategory,
-                }),
+                body: JSON.stringify(categoryData),
             });
 
             const data = await res.json();
+            console.log("Category assignment response:", data);
 
             if (!res.ok) {
                 throw new Error(data.message || `Failed to assign category: ${res.status}`);
             }
 
-            toast.success("Category assigned successfully!");
+            toast.success(data.message || "Category assigned successfully!");
             setSelectedCategory("");
 
             // Refresh profile to show updated categories
@@ -382,27 +421,38 @@ export default function CreateTutorProfilePage() {
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition disabled:bg-gray-50"
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
-                                disabled={!profile || categories.length === 0}
+                                disabled={!profile || loading || categories.length === 0}
                             >
                                 <option value="">-- Select a Category --</option>
-                                {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </option>
-                                ))}
+                                {loading ? (
+                                    <option value="" disabled>Loading categories...</option>
+                                ) : categories.length === 0 ? (
+                                    <option value="" disabled>No active categories available</option>
+                                ) : (
+                                    categories.map((cat) => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.name}
+                                        </option>
+                                    ))
+                                )}
                             </select>
 
-                            {categories.length === 0 && (
+                            {loading && (
                                 <p className="text-sm text-gray-500 mt-2">
                                     Loading categories...
+                                </p>
+                            )}
+                            {!loading && categories.length === 0 && (
+                                <p className="text-sm text-gray-500 mt-2">
+                                    No active categories found
                                 </p>
                             )}
                         </div>
 
                         <button
                             onClick={handleCategorySubmit}
-                            disabled={!profile || !selectedCategory || submittingCategory}
-                            className={`w-full py-3 px-4 rounded-lg font-medium transition ${!profile || !selectedCategory || submittingCategory
+                            disabled={!profile || !selectedCategory || submittingCategory || categories.length === 0}
+                            className={`w-full py-3 px-4 rounded-lg font-medium transition ${!profile || !selectedCategory || submittingCategory || categories.length === 0
                                 ? "bg-gray-300 cursor-not-allowed"
                                 : "bg-green-600 hover:bg-green-700 text-white"
                                 }`}
@@ -437,6 +487,12 @@ export default function CreateTutorProfilePage() {
                                 <p className="text-sm text-gray-600">Experience</p>
                                 <p className="font-medium">{profile.experienceYears} years</p>
                             </div>
+                            <div>
+                                <p className="text-sm text-gray-600">Rating</p>
+                                <p className="font-medium">
+                                    {profile.rating ? `${profile.rating}⭐` : "No ratings yet"}
+                                </p>
+                            </div>
                         </div>
 
                         <div>
@@ -470,12 +526,12 @@ export default function CreateTutorProfilePage() {
                         >
                             Go to Dashboard
                         </button>
-                        <button
+                        {/* <button
                             onClick={() => router.push("/tutor/profile")}
                             className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-3 px-4 rounded-lg font-medium transition"
                         >
                             View Full Profile
-                        </button>
+                        </button> */}
                     </div>
                 </div>
             )}

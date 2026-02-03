@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {/* {!hideNavbar && <Navbar />} */}
                 <Navbar />
                 {children}
-                <Footer2 />
+                {/* <Footer2 /> */}
                 <Toaster richColors position="top-center" />
             </body>
         </html>

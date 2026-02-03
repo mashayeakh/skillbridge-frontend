@@ -177,10 +177,10 @@ export default function DashboardPage() {
                         <BookOpen className="h-4 w-4 mr-2" />
                         Book New Session
                     </Button> */}
-                    <Button variant="outline" className="border-input">
+                    {/* <Button variant="outline" className="border-input">
                         <Download className="h-4 w-4 mr-2" />
                         Export Data
-                    </Button>
+                    </Button> */}
                 </div>
             </div>
 

@@ -69,7 +69,7 @@ export default function ManageCategoriesPage() {
     async function fetchCategories() {
         try {
             setError(null);
-            const res = await apiGet("/api/admin/categories");
+            const res = await apiGet("/api/public/categories");
             if (res.success) {
                 setCategories(res.data.map((cat: Category) => ({
                     ...cat,
@@ -767,16 +767,6 @@ export default function ManageCategoriesPage() {
                                                                 title="Edit"
                                                             >
                                                                 <Edit size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => toggleStatus(category.id, category.isActive)}
-                                                                className={`p-2 rounded-lg transition-colors ${category.isActive
-                                                                    ? 'text-orange-600 hover:bg-orange-50'
-                                                                    : 'text-green-600 hover:bg-green-50'
-                                                                    }`}
-                                                                title={category.isActive ? "Deactivate" : "Activate"}
-                                                            >
-                                                                {category.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
                                                             </button>
                                                             <button
                                                                 onClick={() => handleDelete(category.id)}

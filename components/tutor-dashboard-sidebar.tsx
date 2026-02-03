@@ -9,6 +9,11 @@ export function TutorDashboardSidebar() {
 
     const navItems = [
         {
+            name: "Profile",
+            href: "/tutor/profile",
+            icon: User,
+        },
+        {
             name: "Dashboard",
             href: "/tutor/dashboard",
             icon: Home,
@@ -17,11 +22,6 @@ export function TutorDashboardSidebar() {
             name: "Availability",
             href: "/tutor/availability",
             icon: Calendar,
-        },
-        {
-            name: "Profile",
-            href: "/tutor/profile",
-            icon: User,
         },
     ];
 

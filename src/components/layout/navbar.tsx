@@ -220,18 +220,22 @@ const Navbar = ({
 
                   {role === "TUTOR" && (
                     <>
-                      <DropdownMenuItem asChild>
-                        <Link href={routes.availability!}>
-                          <BookOpen className="mr-2 h-4 w-4" />
-                          Availability
-                        </Link>
-                      </DropdownMenuItem>
+
                       <DropdownMenuItem asChild>
                         <Link href={routes.profile!}>
                           <User className="mr-2 h-4 w-4" />
                           Profile
                         </Link>
                       </DropdownMenuItem>
+
+
+                      <DropdownMenuItem asChild>
+                        <Link href={routes.availability!}>
+                          <BookOpen className="mr-2 h-4 w-4" />
+                          Availability
+                        </Link>
+                      </DropdownMenuItem>
+
                     </>
                   )}
 

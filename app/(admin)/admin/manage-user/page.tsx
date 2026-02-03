@@ -585,13 +585,13 @@ export default function ManageUserPage() {
                                             <td className="p-4">
                                                 <div className="flex items-center gap-2">
                                                     {/* Delete button */}
-                                                    <button
+                                                    {/* <button
                                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                         title="Delete user"
                                                         onClick={() => toast.info("Delete functionality not implemented")}
                                                     >
                                                         <Trash2 size={18} />
-                                                    </button>
+                                                    </button> */}
 
                                                     {/* Ban / Unban button */}
                                                     <button
@@ -614,12 +614,12 @@ export default function ManageUserPage() {
                                                     </button>
 
                                                     {/* More options */}
-                                                    <button
+                                                    {/* <button
                                                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                         title="More options"
                                                     >
                                                         <MoreVertical size={18} />
-                                                    </button>
+                                                    </button> */}
                                                 </div>
                                             </td>
                                         </tr>
