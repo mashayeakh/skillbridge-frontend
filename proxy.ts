@@ -13,29 +13,35 @@ export async function proxy(request: NextRequest) {
     // 🔐 Everything below requires login
     const { data } = await userService.getSession();
 
+    console.log("DATA ", data)
+
     if (!data) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
     const role = data.user.role;
 
-    // 2️⃣ Admin routes
+    console.log("ROLE FROM SESSION:", data);
+    console.log("EXPECTED ADMIN:", Role);
+
+
+    // 2️ Admin routes
     if (pathname.startsWith("/admin")) {
-        if (role !== Role.admin) {
+        if (role !== "ADMIN") {
             return NextResponse.redirect(new URL(getHome(role), request.url));
         }
     }
 
-    // 3️⃣ Tutor routes
+    // 3️ Tutor routes
     if (pathname.startsWith("/tutor")) {
-        if (role !== Role.tutor) {
+        if (role !== "TUTOR") {
             return NextResponse.redirect(new URL(getHome(role), request.url));
         }
     }
 
-    // 4️⃣ Student dashboard
+    // 4️ Student dashboard
     if (pathname.startsWith("/dashboard")) {
-        if (role !== Role.student) {
+        if (role !== "STUDENT") {
             return NextResponse.redirect(new URL(getHome(role), request.url));
         }
     }
@@ -43,18 +49,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
 }
 
-// 👇 role → home redirect
 function getHome(role: string) {
     switch (role) {
-        case Role.admin:
+        case "ADMIN":
             return "/admin/dashboard";
-        case Role.tutor:
+        case "TUTOR":
             return "/tutor/dashboard";
-        case Role.student:
+        case "STUDENT":
         default:
             return "/dashboard";
     }
 }
+
 
 export const config = {
     matcher: [
@@ -62,6 +68,6 @@ export const config = {
         "/tutor/:path*",
         "/dashboard/:path*",
         "/dashboard",
-        "/tutors/:path*", // still matched, but now public
+        "/tutors/:path*",
     ],
 };

@@ -8,12 +8,15 @@ export const userService = {
     async getSession() {
         try {
             const cookieStore = await cookies(); // get cookies from browser
-            const res = await fetch(`${AUTH_URL}/get-session`, {
+            const res = await fetch(`${AUTH_URL}/api/auth/session`, {
                 headers: {
                     Cookie: cookieStore.toString()
                 },
                 cache: "no-store"
             });
+
+            // console.log(object)
+
             const session = await res.json();
 
             if (!session) {
