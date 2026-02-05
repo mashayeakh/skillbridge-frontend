@@ -5,10 +5,17 @@ import { useState, useEffect } from "react";
 import { Calendar, Clock, Plus, Trash2, CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 // ---------------- API Helpers ---------------- //
+// const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 
 async function fetchTutorProfile() {
   try {
-    const res = await fetch("http://localhost:5000/api/tutor/me", {
+    // const res = await fetch("http://localhost:5000/api/tutor/me", {
+    //   credentials: "include",
+    // });
+
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/me`, {
       credentials: "include",
     });
 
@@ -21,11 +28,11 @@ async function fetchTutorProfile() {
     }
 
     const data = await res.json();
-    
+
     if (!res.ok) {
       throw new Error(data.message || `HTTP error! status: ${res.status}`);
     }
-    
+
     return data;
   } catch (error: any) {
     console.error("fetchTutorProfile error:", error);
@@ -35,12 +42,20 @@ async function fetchTutorProfile() {
 
 async function createTutorAvailability(startTime: string, endTime: string) {
   try {
-    const res = await fetch("http://localhost:5000/api/tutor-availability", {
+    // const res = await fetch("http://localhost:5000/api/tutor-availability", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   credentials: "include",
+    //   body: JSON.stringify({ startTime, endTime }),
+    // });
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor-availability`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ startTime, endTime }),
     });
+
 
     // Check if response is JSON
     const contentType = res.headers.get("content-type");
@@ -51,11 +66,11 @@ async function createTutorAvailability(startTime: string, endTime: string) {
     }
 
     const data = await res.json();
-    
+
     if (!res.ok) {
       throw new Error(data.message || `HTTP error! status: ${res.status}`);
     }
-    
+
     return data;
   } catch (error: any) {
     console.error("createTutorAvailability error:", error);
@@ -65,7 +80,12 @@ async function createTutorAvailability(startTime: string, endTime: string) {
 
 async function deleteTutorAvailability(id: string) {
   try {
-    const res = await fetch(`http://localhost:5000/api/tutor-availability/${id}`, {
+    // const res = await fetch(`http://localhost:5000/api/tutor-availability/${id}`, {
+    //   method: "DELETE",
+    //   credentials: "include",
+    // });
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor-availability/${id}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -79,11 +99,11 @@ async function deleteTutorAvailability(id: string) {
     }
 
     const data = await res.json();
-    
+
     if (!res.ok) {
       throw new Error(data.message || `HTTP error! status: ${res.status}`);
     }
-    
+
     return data;
   } catch (error: any) {
     console.error("deleteTutorAvailability error:", error);
@@ -118,7 +138,7 @@ export default function TutorAvailabilityPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!startTime || !endTime) {
       setMessage({ text: "Please select both start and end times", type: "error" });
@@ -205,11 +225,10 @@ export default function TutorAvailabilityPage() {
         {/* Message Alert */}
         {message.text && (
           <div
-            className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
-              message.type === "success"
-                ? "bg-green-50 text-green-800 border border-green-200"
-                : "bg-red-50 text-red-800 border border-red-200"
-            }`}
+            className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${message.type === "success"
+              ? "bg-green-50 text-green-800 border border-green-200"
+              : "bg-red-50 text-red-800 border border-red-200"
+              }`}
           >
             {message.type === "success" ? (
               <CheckCircle className="w-5 h-5" />
@@ -226,7 +245,7 @@ export default function TutorAvailabilityPage() {
             <Plus className="w-6 h-6 text-blue-600" />
             Add New Availability Slot
           </h2>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               {/* Start Time */}
@@ -285,15 +304,15 @@ export default function TutorAvailabilityPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
           <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
             <div className="text-3xl font-bold text-blue-600">{slots.length}</div>
             <div className="text-sm text-gray-600">Total Slots</div>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          {/* <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
             <div className="text-3xl font-bold text-green-600">{upcomingSlots.length}</div>
             <div className="text-sm text-gray-600">Upcoming</div>
-          </div>
+          </div> */}
           <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
             <div className="text-3xl font-bold text-gray-600">{pastSlots.length}</div>
             <div className="text-sm text-gray-600">Past</div>
@@ -349,11 +368,10 @@ export default function TutorAvailabilityPage() {
                       <span>Duration: {getDuration(slot.startTime, slot.endTime)}</span>
                     </div>
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                        slot.isBooked 
-                          ? "bg-yellow-100 text-yellow-800" 
-                          : "bg-green-100 text-green-800"
-                      }`}>
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${slot.isBooked
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-green-100 text-green-800"
+                        }`}>
                         {slot.isBooked ? "Booked" : "Available"}
                       </span>
                     </div>

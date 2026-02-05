@@ -5,7 +5,7 @@ import { Role } from "./app/constants/role";
 export async function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
-    // ✅ 1️⃣ Public tutor profile (NO LOGIN REQUIRED)
+    //  1️ Public tutor profile (NO LOGIN REQUIRED)
     if (pathname.startsWith("/tutors/")) {
         return NextResponse.next();
     }

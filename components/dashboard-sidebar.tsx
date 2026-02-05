@@ -19,6 +19,11 @@ export function DashboardSidebar() {
             icon: Calendar,
         },
         {
+            name: "Review",
+            href: "/dashboard/review",
+            icon: User,
+        },
+        {
             name: "Profile",
             href: "/dashboard/profile",
             icon: User,

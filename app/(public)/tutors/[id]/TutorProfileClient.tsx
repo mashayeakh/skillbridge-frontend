@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, Clock, DollarSign, Calendar, CheckCircle, Loader2, X } from "lucide-react";
+import { Star, Clock, DollarSign, Calendar, CheckCircle, Loader2, X, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,15 @@ interface Tutor {
     categories?: Category[];
 }
 
+interface AvailabilitySlot {
+    id: string;
+    tutorProfileId: string;
+    startTime: string;
+    endTime: string;
+    isBooked: boolean;
+    createdAt: string;
+}
+
 interface TutorProfileClientProps {
     tutor: Tutor;
     filteredTutors: Tutor[];
@@ -34,10 +43,11 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
     const [isBooking, setIsBooking] = useState(false);
     const [isBooked, setIsBooked] = useState(false);
     const [bookingId, setBookingId] = useState<string | null>(null);
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
+    const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [studentId, setStudentId] = useState<string>("");
+    const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
 
     const initials = tutor.name
         .split(" ")
@@ -75,12 +85,64 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
         fetchStudentId();
     }, []);
 
+    // Fetch tutor availability slots
+    useEffect(() => {
+        const fetchAvailabilitySlots = async () => {
+            try {
+                setLoadingSlots(true);
+                console.log("🔍 Fetching availability slots for tutor:", tutor.id);
+
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor-availability/${tutor.id}/available`,
+                    {
+                        credentials: "include",
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    }
+                );
+
+                console.log("📥 Availability response status:", response.status);
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch availability: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("📦 Availability data:", data);
+
+                if (data.success && data.data) {
+                    setAvailabilitySlots(data.data);
+                    toast.success(data.message || "Available slots loaded");
+                } else {
+                    toast.error(data.message || "No available slots found");
+                }
+            } catch (error: any) {
+                console.error("❌ Error fetching availability:", error);
+                toast.error(error.message || "Failed to load available slots");
+            } finally {
+                setLoadingSlots(false);
+            }
+        };
+
+        if (tutor.id) {
+            fetchAvailabilitySlots();
+        }
+    }, [tutor.id]);
+
+    const handleSelectSlot = (slot: AvailabilitySlot) => {
+        setSelectedSlot(slot);
+        setShowModal(true);
+        toast.success(`Selected ${formatSlotTime(slot)}`);
+    };
+
     const handleBookSession = async () => {
         console.log("🚀 Starting booking process...");
         console.log("🎯 Tutor ID:", tutor.id);
+        console.log("⏰ Selected slot:", selectedSlot);
 
-        if (!startDate || !endDate) {
-            toast.error("Please select start and end dates");
+        if (!selectedSlot) {
+            toast.error("Please select an available time slot");
             return;
         }
 
@@ -92,12 +154,8 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
         setIsBooking(true);
 
         try {
-            // Create ISO strings for dates - fix the time format
-            const startTime = new Date(startDate);
-            startTime.setHours(10, 0, 0, 0); // Set to 10:00 AM
-
-            const endTime = new Date(endDate);
-            endTime.setHours(12, 0, 0, 0); // Set to 12:00 PM
+            const startTime = new Date(selectedSlot.startTime);
+            const endTime = new Date(selectedSlot.endTime);
 
             // Calculate duration in hours
             const durationMs = endTime.getTime() - startTime.getTime();
@@ -115,7 +173,6 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
             console.log("📤 Booking payload:", bookingPayload);
             console.log("🎯 Sending to:", `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/bookings`);
 
-            // FIX: Use /api/bookings (plural) not /api/booking (singular)
             const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/bookings`, {
                 method: "POST",
                 headers: {
@@ -127,7 +184,6 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
 
             console.log("📥 Response status:", response.status);
 
-            // Log full response for debugging
             const responseText = await response.text();
             console.log("📥 Raw response text:", responseText);
 
@@ -137,12 +193,10 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                 console.log("📥 Parsed response data:", responseData);
             } catch (error) {
                 console.error("❌ Failed to parse JSON response:", error);
-                console.error("❌ Response text was:", responseText);
                 throw new Error("Invalid server response. Please check the API endpoint.");
             }
 
             if (!response.ok) {
-                // Log the error details
                 console.error("❌ Server error details:", responseData);
                 throw new Error(responseData.message || `Booking failed: Status ${response.status}`);
             }
@@ -153,8 +207,10 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                 setBookingId(responseData.data?.id || "N/A");
                 toast.success("🎉 Session booked successfully!");
                 setShowModal(false);
-                setStartDate("");
-                setEndDate("");
+                setSelectedSlot(null);
+
+                // Update availability slots (remove booked slot)
+                setAvailabilitySlots(prev => prev.filter(slot => slot.id !== selectedSlot.id));
             } else {
                 throw new Error(responseData.message || "Booking failed");
             }
@@ -166,16 +222,81 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
         }
     };
 
+    // Format slot time for display
+    const formatSlotTime = (slot: AvailabilitySlot) => {
+        try {
+            const start = new Date(slot.startTime);
+            const end = new Date(slot.endTime);
+
+            const dateStr = start.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+
+            const startTimeStr = start.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+
+            const endTimeStr = end.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+
+            return `${dateStr} | ${startTimeStr} - ${endTimeStr}`;
+        } catch {
+            return "Invalid time";
+        }
+    };
+
+    // Calculate duration for a slot
+    const calculateSlotDuration = (slot: AvailabilitySlot) => {
+        try {
+            const start = new Date(slot.startTime);
+            const end = new Date(slot.endTime);
+            const durationMs = end.getTime() - start.getTime();
+            const durationHours = durationMs / (1000 * 60 * 60);
+
+            if (durationHours < 1) {
+                const durationMinutes = durationMs / (1000 * 60);
+                return `${Math.round(durationMinutes)} minutes`;
+            }
+            return `${durationHours.toFixed(1)} hours`;
+        } catch {
+            return "Unknown duration";
+        }
+    };
+
+    // Get date only from slot
+    const getSlotDate = (slot: AvailabilitySlot) => {
+        try {
+            const date = new Date(slot.startTime);
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        } catch {
+            return "Invalid date";
+        }
+    };
+
+    // Group slots by date
+    const groupedSlots = availabilitySlots.reduce((groups, slot) => {
+        const date = getSlotDate(slot);
+        if (!groups[date]) {
+            groups[date] = [];
+        }
+        groups[date].push(slot);
+        return groups;
+    }, {} as Record<string, AvailabilitySlot[]>);
+
     return (
         <div className="max-w-4xl mx-auto p-4">
-            {/* Debug Info */}
-            <div className="mb-4 p-4 bg-gray-100 rounded-lg">
-                <div className="text-sm font-mono">
-                    <div>Tutor ID: {tutor.id}</div>
-                    <div>Student ID: {studentId || "Loading..."}</div>
-                </div>
-            </div>
-
             {/* Simple Tutor Profile Card */}
             <Card className="mb-6">
                 <CardHeader>
@@ -209,7 +330,85 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground mb-4">{tutor.bio}</p>
+                    <p className="text-muted-foreground mb-6">{tutor.bio}</p>
+
+                    {/* Available Time Slots Section */}
+                    <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <CalendarDays className="size-5 text-blue-600" />
+                            <h3 className="text-lg font-semibold">Available Time Slots</h3>
+                        </div>
+
+                        {loadingSlots ? (
+                            <div className="text-center py-8">
+                                <div className="inline-flex items-center justify-center p-4 bg-gray-100 rounded-full mb-4">
+                                    <Loader2 className="size-6 text-gray-400 animate-spin" />
+                                </div>
+                                <p className="text-gray-500">Loading available slots...</p>
+                            </div>
+                        ) : availabilitySlots.length === 0 ? (
+                            <div className="text-center py-6 bg-gray-50 rounded-lg">
+                                <CalendarDays className="size-12 text-gray-400 mx-auto mb-3" />
+                                <h4 className="font-medium text-gray-700 mb-2">No Available Slots</h4>
+                                <p className="text-gray-600 text-sm">
+                                    This tutor hasn't set any available time slots yet.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {Object.entries(groupedSlots).map(([date, slots]) => (
+                                    <div key={date} className="border rounded-lg overflow-hidden">
+                                        <div className="bg-gray-50 px-4 py-3 border-b">
+                                            <h4 className="font-semibold text-gray-800">{date}</h4>
+                                        </div>
+                                        <div className="divide-y">
+                                            {slots.map((slot) => (
+                                                <div
+                                                    key={slot.id}
+                                                    className="p-4 hover:bg-blue-50 transition cursor-pointer"
+                                                    onClick={() => handleSelectSlot(slot)}
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <div className={`w-3 h-3 rounded-full ${slot.isBooked ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                                                                <span className="font-medium">
+                                                                    {new Date(slot.startTime).toLocaleTimeString('en-US', {
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit',
+                                                                        hour12: true
+                                                                    })} - {new Date(slot.endTime).toLocaleTimeString('en-US', {
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit',
+                                                                        hour12: true
+                                                                    })}
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-sm text-gray-600">
+                                                                Duration: {calculateSlotDuration(slot)}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="text-sm font-semibold text-gray-800">
+                                                                ${(tutor.hourlyRate * parseFloat(calculateSlotDuration(slot))).toFixed(2)}
+                                                            </div>
+                                                            <div className="text-xs text-gray-500">Total cost</div>
+                                                            <Button
+                                                                size="sm"
+                                                                className="mt-2 bg-blue-600 hover:bg-blue-700"
+                                                            >
+                                                                Select
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     {isBooked ? (
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -223,17 +422,8 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                         </div>
                     ) : (
                         <>
-                            <Button
-                                className="w-full"
-                                onClick={() => setShowModal(true)}
-                                disabled={!studentId}
-                            >
-                                <Calendar className="mr-2 size-4" />
-                                {studentId ? "Book Session" : "Loading..."}
-                            </Button>
-
-                            {/* Simple Modal */}
-                            {showModal && (
+                            {/* Booking Modal */}
+                            {showModal && selectedSlot && (
                                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                                     <div className="bg-white rounded-lg max-w-md w-full p-6">
                                         <div className="flex justify-between items-center mb-4">
@@ -247,62 +437,88 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                         </div>
 
                                         <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="startDate">Start Date *</Label>
-                                                <Input
-                                                    id="startDate"
-                                                    type="date"
-                                                    value={startDate}
-                                                    onChange={(e) => setStartDate(e.target.value)}
-                                                    min={new Date().toISOString().split('T')[0]}
-                                                    required
-                                                />
-                                                <p className="text-xs text-gray-500">Session will start at 10:00 AM</p>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <Label htmlFor="endDate">End Date *</Label>
-                                                <Input
-                                                    id="endDate"
-                                                    type="date"
-                                                    value={endDate}
-                                                    onChange={(e) => setEndDate(e.target.value)}
-                                                    min={startDate || new Date().toISOString().split('T')[0]}
-                                                    required
-                                                />
-                                                <p className="text-xs text-gray-500">Session will end at 12:00 PM</p>
-                                            </div>
-
+                                            {/* Selected Slot Display */}
                                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                                <h4 className="font-semibold text-blue-800 mb-2">Session Summary</h4>
-                                                <div className="space-y-1 text-blue-700">
-                                                    <p>Tutor ID: <span className="font-mono text-xs">{tutor.id}</span></p>
-                                                    <p>Student ID: <span className="font-mono text-xs">{studentId || "Loading..."}</span></p>
-                                                    <p>Rate: ${tutor.hourlyRate}/hr</p>
-                                                    {startDate && endDate && (
-                                                        <>
-                                                            <p>Start: {new Date(startDate).toLocaleDateString()} 10:00 AM</p>
-                                                            <p>End: {new Date(endDate).toLocaleDateString()} 12:00 PM</p>
-                                                            <p className="font-bold text-lg">
-                                                                Total: ${tutor.hourlyRate * 2} (2 hours)
-                                                            </p>
-                                                        </>
-                                                    )}
+                                                <h4 className="font-semibold text-blue-800 mb-2">Selected Time Slot</h4>
+                                                <div className="space-y-2 text-blue-700">
+                                                    <div className="flex justify-between">
+                                                        <span>Date:</span>
+                                                        <span className="font-medium">
+                                                            {getSlotDate(selectedSlot)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>Start Time:</span>
+                                                        <span className="font-medium">
+                                                            {new Date(selectedSlot.startTime).toLocaleTimeString('en-US', {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: true
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>End Time:</span>
+                                                        <span className="font-medium">
+                                                            {new Date(selectedSlot.endTime).toLocaleTimeString('en-US', {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: true
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>Duration:</span>
+                                                        <span className="font-medium">
+                                                            {calculateSlotDuration(selectedSlot)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
 
+                                            {/* Booking Summary */}
+                                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                                <h4 className="font-semibold text-gray-800 mb-2">Booking Summary</h4>
+                                                <div className="space-y-1 text-gray-700">
+                                                    <div className="flex justify-between">
+                                                        <span>Hourly Rate:</span>
+                                                        <span className="font-medium">${tutor.hourlyRate}/hr</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>Session Duration:</span>
+                                                        <span className="font-medium">
+                                                            {calculateSlotDuration(selectedSlot)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between pt-2 border-t">
+                                                        <span className="font-bold">Total Amount:</span>
+                                                        <span className="text-lg font-bold text-green-600">
+                                                            $
+                                                            {(
+                                                                tutor.hourlyRate *
+                                                                parseFloat(calculateSlotDuration(selectedSlot).replace(' hours', '').replace(' minutes', '') / 60)
+                                                            ).toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Action Buttons */}
                                             <div className="flex gap-3 pt-4">
                                                 <Button
                                                     variant="outline"
-                                                    onClick={() => setShowModal(false)}
+                                                    onClick={() => {
+                                                        setShowModal(false);
+                                                        setSelectedSlot(null);
+                                                    }}
                                                     className="flex-1"
                                                 >
                                                     Cancel
                                                 </Button>
                                                 <Button
                                                     onClick={handleBookSession}
-                                                    disabled={isBooking || !startDate || !endDate || !studentId}
-                                                    className="flex-1"
+                                                    disabled={isBooking || !studentId}
+                                                    className="flex-1 bg-blue-600 hover:bg-blue-700"
                                                 >
                                                     {isBooking ? (
                                                         <>

@@ -64,10 +64,10 @@ export function AdminDashboardSidebar() {
                         <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                             <User className="h-5 w-5 text-gray-500" />
                         </div>
-                        <div>
+                        {/* <div>
                             <p className="text-sm font-medium">John Doe</p>
                             <p className="text-xs text-gray-500">john@example.com</p>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

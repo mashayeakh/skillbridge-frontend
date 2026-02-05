@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { authClient } from '@/lib/auth-clients';
 import {
     TrendingUp,
     Users,
@@ -53,8 +52,12 @@ export default function TutorDashboardPage() {
             try {
                 setLoading(true);
 
+                console.log('📡 Fetching dashboard data...');
+
+                // Make all API calls in parallel
                 const [basicRes, reviewsRes, statsRes] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/dashboard/`, {
+                    // REMOVED trailing slash from URL
+                    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/dashboard/overall`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
@@ -64,23 +67,69 @@ export default function TutorDashboardPage() {
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
                     }),
-                    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/dashboard/stats`, {
+                    // CORRECTED endpoint URL
+                    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/dashboard/overall/stats`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
                     }),
                 ]);
 
-                const basicData = await basicRes.json();
-                const reviewsData = await reviewsRes.json();
-                const statsData = await statsRes.json();
+                console.log('📥 Responses received:', {
+                    basicStatus: basicRes.status,
+                    reviewsStatus: reviewsRes.status,
+                    statsStatus: statsRes.status
+                });
 
-                if (basicData.success) setBasicStats(basicData.data);
-                if (reviewsData.success) setReviewsSummary(reviewsData.data);
-                if (statsData.success) setTutorStats(statsData.data);
+                // Parse responses
+                let basicData, reviewsData, statsData;
+
+                try {
+                    basicData = await basicRes.json();
+                    console.log('📦 Basic data:', basicData);
+                } catch (error) {
+                    console.error('❌ Failed to parse basic data:', error);
+                }
+
+                try {
+                    reviewsData = await reviewsRes.json();
+                    console.log('📦 Reviews data:', reviewsData);
+                } catch (error) {
+                    console.error('❌ Failed to parse reviews data:', error);
+                }
+
+                try {
+                    statsData = await statsRes.json();
+                    console.log('📦 Stats data:', statsData);
+                } catch (error) {
+                    console.error('❌ Failed to parse stats data:', error);
+                }
+
+                // Set state based on responses
+                if (basicData?.success) {
+                    setBasicStats(basicData.data);
+                    console.log('✅ Basic stats set:', basicData.data);
+                } else {
+                    toast.error(basicData?.message || 'Failed to load basic stats');
+                }
+
+                if (reviewsData?.success) {
+                    setReviewsSummary(reviewsData.data);
+                    console.log('✅ Reviews summary set:', reviewsData.data);
+                } else {
+                    console.log('⚠️ No reviews data:', reviewsData?.message);
+                }
+
+                if (statsData?.success) {
+                    setTutorStats(statsData.data);
+                    console.log('✅ Tutor stats set:', statsData.data);
+                } else {
+                    toast.error(statsData?.message || 'Failed to load tutor stats');
+                }
 
             } catch (err: any) {
-                toast(`Error fetching dashboard data: ${err.message || err}`);
+                console.error('❌ Error fetching dashboard:', err);
+                toast.error(`Error fetching dashboard data: ${err.message || err}`);
             } finally {
                 setLoading(false);
             }
@@ -88,6 +137,18 @@ export default function TutorDashboardPage() {
 
         fetchDashboard();
     }, []);
+
+    // Debug: Log current state
+    useEffect(() => {
+        if (!loading) {
+            console.log('🔄 Current state:', {
+                basicStats,
+                reviewsSummary,
+                tutorStats,
+                loading
+            });
+        }
+    }, [loading, basicStats, reviewsSummary, tutorStats]);
 
     const getRatingColor = (rating: number) => {
         if (rating >= 4.5) return 'text-emerald-500';
@@ -114,6 +175,27 @@ export default function TutorDashboardPage() {
         );
     }
 
+    // If no data is loaded, show error state
+    if (!basicStats) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Sparkles className="w-8 h-8 text-red-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Failed to Load Dashboard</h3>
+                    <p className="text-gray-600 mb-4">Unable to fetch your dashboard data. Please try again.</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const totalReviews = reviewsSummary ? Object.values(reviewsSummary).reduce((a, b) => a + b, 0) : 0;
     const ratingDistribution = reviewsSummary ? Object.entries(reviewsSummary).map(([star, count]) => ({
         star,
@@ -123,6 +205,8 @@ export default function TutorDashboardPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 lg:p-8">
+
+
             {/* Header */}
             <div className="mb-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
@@ -159,7 +243,7 @@ export default function TutorDashboardPage() {
                         </span>
                     </div>
                     <p className="text-gray-500 text-sm font-medium mb-1">Hourly Rate</p>
-                    <p className="text-2xl font-bold text-gray-900">${basicStats?.hourlyRate}</p>
+                    <p className="text-2xl font-bold text-gray-900">${basicStats?.hourlyRate || 0}</p>
                     <p className="text-xs text-gray-400 mt-2">per hour</p>
                 </Card>
 
@@ -174,7 +258,7 @@ export default function TutorDashboardPage() {
                         </span>
                     </div>
                     <p className="text-gray-500 text-sm font-medium mb-1">Experience</p>
-                    <p className="text-2xl font-bold text-gray-900">{basicStats?.experienceYears}</p>
+                    <p className="text-2xl font-bold text-gray-900">{basicStats?.experienceYears || 0}</p>
                     <p className="text-xs text-gray-400 mt-2">years</p>
                 </Card>
 
@@ -185,12 +269,12 @@ export default function TutorDashboardPage() {
                             <Star className="w-5 h-5 text-amber-600" />
                         </div>
                         <span className={`text-xs font-medium ${getRatingColor(basicStats?.rating || 0)} bg-amber-50 px-2 py-1 rounded-full`}>
-                            {basicStats?.rating.toFixed(1)}
+                            {basicStats?.rating?.toFixed(1) || '0.0'}
                         </span>
                     </div>
                     <p className="text-gray-500 text-sm font-medium mb-1">Rating</p>
                     <div className="flex items-center gap-2">
-                        <p className="text-2xl font-bold text-gray-900">{basicStats?.rating.toFixed(1)}</p>
+                        <p className="text-2xl font-bold text-gray-900">{basicStats?.rating?.toFixed(1) || '0.0'}</p>
                         <div className="flex">
                             {[...Array(5)].map((_, i) => (
                                 <Star
@@ -217,7 +301,7 @@ export default function TutorDashboardPage() {
                         </span>
                     </div>
                     <p className="text-gray-500 text-sm font-medium mb-1">Categories</p>
-                    <p className="text-2xl font-bold text-gray-900">{basicStats?.totalCategories}</p>
+                    <p className="text-2xl font-bold text-gray-900">{basicStats?.totalCategories || 0}</p>
                     <p className="text-xs text-gray-400 mt-2">teaching areas</p>
                 </Card>
 
@@ -232,7 +316,7 @@ export default function TutorDashboardPage() {
                         </span>
                     </div>
                     <p className="text-gray-500 text-sm font-medium mb-1">Total Bookings</p>
-                    <p className="text-2xl font-bold text-gray-900">{basicStats?.totalBookings}</p>
+                    <p className="text-2xl font-bold text-gray-900">{basicStats?.totalBookings || 0}</p>
                     <p className="text-xs text-gray-400 mt-2">sessions completed</p>
                 </Card>
 
@@ -248,7 +332,7 @@ export default function TutorDashboardPage() {
                     </div>
                     <p className="text-gray-500 text-sm font-medium mb-1">Conversion Rate</p>
                     <p className={`text-2xl font-bold ${getConversionColor(tutorStats?.conversionRate || 0)}`}>
-                        {tutorStats?.conversionRate}%
+                        {tutorStats?.conversionRate || 0}%
                     </p>
                     <p className="text-xs text-gray-400 mt-2">booking conversion</p>
                 </Card>
@@ -256,49 +340,51 @@ export default function TutorDashboardPage() {
 
             {/* Performance Metrics Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                {/* Reviews Summary Card */}
-                <Card className="lg:col-span-2 p-6 border-gray-200 hover:shadow-lg transition-shadow duration-300">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                <Award className="w-5 h-5 text-blue-600" />
-                                Reviews Distribution
-                            </h2>
-                            <p className="text-gray-500 text-sm mt-1">Student feedback by rating</p>
+                {/* Reviews Summary Card - Only show if we have reviews data */}
+                {reviewsSummary && (
+                    <Card className="lg:col-span-2 p-6 border-gray-200 hover:shadow-lg transition-shadow duration-300">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <Award className="w-5 h-5 text-blue-600" />
+                                    Reviews Distribution
+                                </h2>
+                                <p className="text-gray-500 text-sm mt-1">Student feedback by rating</p>
+                            </div>
+                            <Badge variant="secondary" className="px-3 py-1">
+                                {totalReviews} total reviews
+                            </Badge>
                         </div>
-                        <Badge variant="secondary" className="px-3 py-1">
-                            {totalReviews} total reviews
-                        </Badge>
-                    </div>
 
-                    <div className="space-y-4">
-                        {ratingDistribution.map(({ star, count, percentage }) => (
-                            <div key={star} className="flex items-center">
-                                <div className="flex items-center w-16">
-                                    <span className="text-gray-600 font-medium w-8">{star} ⭐</span>
-                                    <span className="text-gray-900 font-bold ml-2">{count}</span>
-                                </div>
-                                <div className="flex-1 ml-4">
-                                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full ${star === '5' ? 'bg-emerald-500' :
-                                                star === '4' ? 'bg-green-500' :
-                                                    star === '3' ? 'bg-yellow-500' :
-                                                        star === '2' ? 'bg-orange-500' : 'bg-red-500'
-                                                }`}
-                                            style={{ width: `${percentage}%` }}
-                                        />
+                        <div className="space-y-4">
+                            {ratingDistribution.map(({ star, count, percentage }) => (
+                                <div key={star} className="flex items-center">
+                                    <div className="flex items-center w-16">
+                                        <span className="text-gray-600 font-medium w-8">{star} ⭐</span>
+                                        <span className="text-gray-900 font-bold ml-2">{count}</span>
+                                    </div>
+                                    <div className="flex-1 ml-4">
+                                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full ${star === '5' ? 'bg-emerald-500' :
+                                                    star === '4' ? 'bg-green-500' :
+                                                        star === '3' ? 'bg-yellow-500' :
+                                                            star === '2' ? 'bg-orange-500' : 'bg-red-500'
+                                                    }`}
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="w-16 text-right">
+                                        <span className="text-sm font-medium text-gray-600">
+                                            {percentage.toFixed(1)}%
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="w-16 text-right">
-                                    <span className="text-sm font-medium text-gray-600">
-                                        {percentage.toFixed(1)}%
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
+                            ))}
+                        </div>
+                    </Card>
+                )}
 
                 {/* Performance Stats Card */}
                 <Card className="p-6 border-gray-200 hover:shadow-lg transition-shadow duration-300">
@@ -316,7 +402,7 @@ export default function TutorDashboardPage() {
                                 <p className="text-sm font-medium text-gray-600">Average Rating</p>
                                 <div className="flex items-center gap-2 mt-2">
                                     <p className="text-3xl font-bold text-gray-900">
-                                        {tutorStats?.averageRating.toFixed(1)}
+                                        {tutorStats?.averageRating?.toFixed(1) || '0.0'}
                                     </p>
                                     <div className="flex">
                                         {[...Array(5)].map((_, i) => (
@@ -341,7 +427,7 @@ export default function TutorDashboardPage() {
                                 <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
                                 <div className="mt-2">
                                     <p className={`text-3xl font-bold ${getConversionColor(tutorStats?.conversionRate || 0)}`}>
-                                        {tutorStats?.conversionRate}%
+                                        {tutorStats?.conversionRate || 0}%
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
                                         <div className="h-2 bg-gray-200 rounded-full flex-1 overflow-hidden">
@@ -377,21 +463,21 @@ export default function TutorDashboardPage() {
             {/* Quick Stats Footer */}
             <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl">
+                    <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl">
                         <p className="text-sm text-gray-600">Today's Potential</p>
                         <p className="text-lg font-bold text-gray-900">${((basicStats?.hourlyRate || 0) * 3).toFixed(0)}</p>
                         <p className="text-xs text-gray-500">based on 3 average sessions</p>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl">
                         <p className="text-sm text-gray-600">Monthly Trend</p>
-                        <p className="text-lg font-bold text-gray-900">+12.5%</p>
+                        <p className="text-lg font-bold text-green-600">+12.5%</p>
                         <p className="text-xs text-gray-500">growth in bookings</p>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl">
                         <p className="text-sm text-gray-600">Student Satisfaction</p>
                         <p className="text-lg font-bold text-emerald-600">94%</p>
                         <p className="text-xs text-gray-500">positive feedback</p>
-                    </div> */}
+                    </div>
                 </div>
             </div>
         </div>

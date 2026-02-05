@@ -292,7 +292,7 @@ export default function BookingsPage() {
                                         Booking ID: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{booking.id}</span>
                                     </div>
 
-                                   
+
                                 </div>
                             </div>
                         </div>
