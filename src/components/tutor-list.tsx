@@ -143,31 +143,7 @@ const TutorListPage = ({ className }: { className?: string }) => {
         )}
 
         {/* CTA Section - Centered */}
-        {!loading && tutors.length > 0 && (
-          <div className="text-center mt-16">
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary/80 text-white rounded-full mb-6">
-              <TrendingUp className="w-5 h-5" />
-              <span className="font-semibold">Join thousands of successful students</span>
-            </div>
 
-            {/* <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Ready to start your learning journey? Explore all tutors and find your perfect match.
-            </p> */}
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/browse-tutor">
-                <Button size="lg" className="gap-2 px-8">
-                  <BookOpen className="w-5 h-5" />
-                  Browse All Tutors
-                </Button>
-              </Link>
-              <Button size="lg" variant="outline" className="gap-2">
-                <Sparkles className="w-5 h-5" />
-                Get Started Free
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );

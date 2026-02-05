@@ -135,7 +135,7 @@ export default function AdminDashboardPage() {
 
                 {/* Analytics Cards Grid */}
                 {analytics && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                         {/* Users Card */}
                         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-4">
@@ -180,28 +180,6 @@ export default function AdminDashboardPage() {
                                 <div className="text-sm">
                                     <div className="text-gray-500">Completed</div>
                                     <div className="font-semibold text-blue-600">{analytics.bookings.completed}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Revenue Card */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-purple-50 rounded-xl">
-                                    <DollarSign className="h-6 w-6 text-purple-600" />
-                                </div>
-                                <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                                    +15.3%
-                                </span>
-                            </div>
-                            <h3 className="text-gray-500 text-sm font-medium mb-2">Total Revenue</h3>
-                            <p className="text-3xl font-bold text-gray-900 mb-1">
-                                ${analytics.revenue.totalRevenue.toLocaleString()}
-                            </p>
-                            <div className="mt-4">
-                                <div className="text-sm text-gray-500">Avg. Booking</div>
-                                <div className="font-semibold text-gray-900">
-                                    ${analytics.revenue.averageBookingPrice}
                                 </div>
                             </div>
                         </div>

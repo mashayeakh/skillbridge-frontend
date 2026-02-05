@@ -75,7 +75,7 @@ export default function LoginPage() {
             console.log("ERR", error)
         } else {
             toast.success("Welcome back!");
-            router.push("/");
+            router.push("/admin/dashboard");
         }
 
         setIsLoading(false);

@@ -1,11 +1,18 @@
 "use client";
 
-import { Calendar, User, Home } from "lucide-react";
+import { Calendar, User, Home, LogOut } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-clients";
 
 export function AdminDashboardSidebar() {
     const pathname = usePathname();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        await authClient.signOut();
+        router.push("/login");
+    };
 
     const navItems = [
         {
@@ -56,6 +63,15 @@ export function AdminDashboardSidebar() {
                             </Link>
                         );
                     })}
+
+                    {/* Logout Button */}
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all hover:bg-gray-100 text-gray-600 w-full"
+                    >
+                        <LogOut className="h-5 w-5" />
+                        Logout
+                    </button>
                 </nav>
 
                 {/* User Info Footer */}

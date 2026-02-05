@@ -533,7 +533,7 @@ export default function BookingPage() {
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="p-3 bg-blue-50 rounded-lg">
@@ -563,16 +563,7 @@ export default function BookingPage() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-purple-50 rounded-lg">
-                                    <DollarSign className="h-6 w-6 text-purple-600" />
-                                </div>
-                                <span className="text-sm font-medium text-green-600">${stats.revenue.toFixed(2)}</span>
-                            </div>
-                            <div className="text-2xl font-bold text-gray-900">{formatCurrency(stats.revenue)}</div>
-                            <div className="text-sm text-gray-600">Total Revenue</div>
-                        </div>
+
 
                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between mb-4">
@@ -588,7 +579,7 @@ export default function BookingPage() {
                     </div>
 
                     {/* Additional Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                         <div className="bg-white rounded-xl p-4 shadow-sm border">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-yellow-50 rounded-lg">
