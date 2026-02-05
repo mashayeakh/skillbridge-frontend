@@ -87,6 +87,15 @@ interface NavbarProps {
   menu?: MenuItem[];
 }
 
+// ✅ User type with role
+type UserWithRole = {
+  id: string;
+  name?: string | null;
+  email: string;
+  image?: string | null;
+  role?: "STUDENT" | "TUTOR" | "ADMIN";
+};
+
 const Navbar = ({
   className,
   logo = {
@@ -105,8 +114,8 @@ const Navbar = ({
   const { data: session, isPending } = authClient.useSession();
   const [scrolled, setScrolled] = useState(false);
 
-  const user = session?.user;
-  const role = user?.role as "STUDENT" | "TUTOR" | "ADMIN" | undefined;
+  const user = session?.user as UserWithRole | undefined;
+  const role = user?.role;
   const routes = role ? ROLE_ROUTES[role] : null;
 
   const initials = user?.name
@@ -278,7 +287,7 @@ const Navbar = ({
                       {role === "STUDENT" && (
                         <>
                           <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50">
-                            <Link href={routes!.bookings} className="flex items-center gap-3">
+                            <Link href={ROLE_ROUTES.STUDENT.bookings} className="flex items-center gap-3">
                               <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
                                 <BookOpen className="h-4 w-4 text-white" />
                               </div>
@@ -289,7 +298,7 @@ const Navbar = ({
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50">
-                            <Link href={routes!.profile} className="flex items-center gap-3">
+                            <Link href={ROLE_ROUTES.STUDENT.profile} className="flex items-center gap-3">
                               <div className="p-2 bg-gradient-to-br from-emerald-500 to-green-500 rounded-lg">
                                 <User className="h-4 w-4 text-white" />
                               </div>
@@ -305,7 +314,7 @@ const Navbar = ({
                       {role === "TUTOR" && (
                         <>
                           <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50">
-                            <Link href={routes!.profile} className="flex items-center gap-3">
+                            <Link href={ROLE_ROUTES.TUTOR.profile} className="flex items-center gap-3">
                               <div className="p-2 bg-gradient-to-br from-emerald-500 to-green-500 rounded-lg">
                                 <User className="h-4 w-4 text-white" />
                               </div>
@@ -316,7 +325,7 @@ const Navbar = ({
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50">
-                            <Link href={routes!.availability} className="flex items-center gap-3">
+                            <Link href={ROLE_ROUTES.TUTOR.availability} className="flex items-center gap-3">
                               <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg">
                                 <BookOpen className="h-4 w-4 text-white" />
                               </div>
@@ -332,7 +341,7 @@ const Navbar = ({
                       {role === "ADMIN" && (
                         <>
                           <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gradient-to-r hover:from-violet-50 hover:to-purple-50">
-                            <Link href={routes!.manageCategory} className="flex items-center gap-3">
+                            <Link href={ROLE_ROUTES.ADMIN.manageCategory} className="flex items-center gap-3">
                               <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-500 rounded-lg">
                                 <Settings className="h-4 w-4 text-white" />
                               </div>
@@ -343,7 +352,7 @@ const Navbar = ({
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50">
-                            <Link href={routes!.viewBookings} className="flex items-center gap-3">
+                            <Link href={ROLE_ROUTES.ADMIN.viewBookings} className="flex items-center gap-3">
                               <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
                                 <BookOpen className="h-4 w-4 text-white" />
                               </div>
@@ -354,7 +363,7 @@ const Navbar = ({
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gradient-to-r hover:from-rose-50 hover:to-pink-50">
-                            <Link href={routes!.manageUser} className="flex items-center gap-3">
+                            <Link href={ROLE_ROUTES.ADMIN.manageUser} className="flex items-center gap-3">
                               <div className="p-2 bg-gradient-to-br from-rose-500 to-pink-500 rounded-lg">
                                 <User className="h-4 w-4 text-white" />
                               </div>
@@ -490,7 +499,7 @@ const Navbar = ({
                         {role === "STUDENT" && (
                           <>
                             <Link
-                              href={routes.bookings!}
+                              href={ROLE_ROUTES.STUDENT.bookings}
                               className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-colors"
                             >
                               <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
@@ -499,7 +508,7 @@ const Navbar = ({
                               <span className="font-semibold">My Bookings</span>
                             </Link>
                             <Link
-                              href={routes.profile!}
+                              href={ROLE_ROUTES.STUDENT.profile}
                               className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50 transition-colors"
                             >
                               <div className="p-2 bg-gradient-to-br from-emerald-500 to-green-500 rounded-lg">
@@ -513,7 +522,7 @@ const Navbar = ({
                         {role === "TUTOR" && (
                           <>
                             <Link
-                              href={routes.profile!}
+                              href={ROLE_ROUTES.TUTOR.profile}
                               className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50 transition-colors"
                             >
                               <div className="p-2 bg-gradient-to-br from-emerald-500 to-green-500 rounded-lg">
@@ -522,7 +531,7 @@ const Navbar = ({
                               <span className="font-semibold">Profile</span>
                             </Link>
                             <Link
-                              href={routes.availability!}
+                              href={ROLE_ROUTES.TUTOR.availability}
                               className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 transition-colors"
                             >
                               <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg">
@@ -536,7 +545,7 @@ const Navbar = ({
                         {role === "ADMIN" && (
                           <>
                             <Link
-                              href={routes.manageCategory!}
+                              href={ROLE_ROUTES.ADMIN.manageCategory}
                               className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gradient-to-r hover:from-violet-50 hover:to-purple-50 transition-colors"
                             >
                               <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-500 rounded-lg">
@@ -545,7 +554,7 @@ const Navbar = ({
                               <span className="font-semibold">Categories</span>
                             </Link>
                             <Link
-                              href={routes.viewBookings!}
+                              href={ROLE_ROUTES.ADMIN.viewBookings}
                               className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-colors"
                             >
                               <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
@@ -554,7 +563,7 @@ const Navbar = ({
                               <span className="font-semibold">Bookings</span>
                             </Link>
                             <Link
-                              href={routes.manageUser!}
+                              href={ROLE_ROUTES.ADMIN.manageUser}
                               className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gradient-to-r hover:from-rose-50 hover:to-pink-50 transition-colors"
                             >
                               <div className="p-2 bg-gradient-to-br from-rose-500 to-pink-500 rounded-lg">

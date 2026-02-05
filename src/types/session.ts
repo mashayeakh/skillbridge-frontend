@@ -9,6 +9,7 @@ export interface SessionUser {
     expiresAt: string;
     ipAddress?: string | null;
     userAgent?: string | null;
+    role?: string;
     // user: User; // whatever fields your user has: name, email, etc
     // token: string;
 }

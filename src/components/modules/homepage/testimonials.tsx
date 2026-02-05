@@ -10,7 +10,7 @@ import {
     CarouselItem,
     CarouselNext,
     CarouselPrevious,
-} from "@/components/ui/carousel";
+} from "@/components/ui2/carousel";
 import { Users, Mail, Phone, ShieldCheck, UserCheck, GraduationCap, Sparkles, Award, TrendingUp } from "lucide-react";
 
 interface Student {

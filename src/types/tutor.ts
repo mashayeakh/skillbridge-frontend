@@ -1,9 +1,10 @@
-export type Tutor = {
-    id: string
-    name: string
-    rating: number
-    hourlyRate: number
-    categories: string[]
-    bio: string
-    image: string
+export interface Tutor {
+    id: string;
+    name: string;
+    bio: string;
+    hourlyRate: number;
+    experienceYears?: number;
+    rating: number;
+    categories: string[];
+    image: string;
 }

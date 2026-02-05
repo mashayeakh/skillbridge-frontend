@@ -27,6 +27,7 @@ export const authClient = createAuthClient({
     },
 });
 
+
 // console.log(authClient.useSession())
 // const { data: session, isPending } = authClient.useSession();
 
