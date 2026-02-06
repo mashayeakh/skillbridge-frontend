@@ -9,13 +9,13 @@ export const userService = {
     async getSession() {
         try {
             const cookieStore = await cookies(); // get cookies from browser
-            const res = await fetch(`${AUTH_URL}/api/auth/session`, {
+            const res = await fetch(`${AUTH_URL}/api/auth/get-session`, {
                 headers: {
                     Cookie: cookieStore.toString()
                 },
                 cache: "no-store"
             });
-
+            console.log("RESSSS", res)
             // console.log(object)
 
             const session = await res.json();
