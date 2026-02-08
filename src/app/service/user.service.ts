@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 // import { env } from "../env"; // your env.ts file where AUTH_URL is defined
 
 
-const AUTH_URL = env.AUTH_URL;
+const AUTH_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export const userService = {
     async getSession() {

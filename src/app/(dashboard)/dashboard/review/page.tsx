@@ -4,6 +4,8 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Calendar, Clock, User, DollarSign, Star, CheckCircle, XCircle, AlertCircle, Loader2, MessageSquare, X, Send } from "lucide-react";
+import { apiFetchReview } from "@/actions/student";
+import { submitReviewAction } from "@/actions/reviews-page";
 
 interface TutorProfile {
     id: string;
@@ -12,6 +14,14 @@ interface TutorProfile {
     hourlyRate: number;
     rating: number | null;
     userId: string;
+}
+
+interface Review {
+    id: string;
+    bookingId: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
 }
 
 interface Booking {
@@ -25,6 +35,7 @@ interface Booking {
     createdAt: string;
     updatedAt: string;
     tutorProfile: TutorProfile;
+    review?: Review | null;
 }
 
 export default function ReviewsPage() {
@@ -47,33 +58,39 @@ export default function ReviewsPage() {
                 setLoading(true);
                 console.log("📡 Fetching bookings for review...");
 
-                const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/bookings/my-bookings`,
-                    {
-                        credentials: "include",
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    }
-                );
+                const data = await apiFetchReview("/api/bookings/my-bookings");
 
-                console.log("📥 Response status:", response.status);
-
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch bookings: ${response.status}`);
-                }
-
-                const data = await response.json();
                 console.log("📦 API response:", data);
+                console.log("🔍 First booking data:", JSON.stringify(data?.data?.[0], null, 2));
+                console.log("🔍 Review field in first booking:", data?.data?.[0]?.review);
 
                 if (data.success && data.data) {
+                    data.data.forEach((booking: Booking, index: number) => {
+                        console.log(`📋 Booking ${index}:`, {
+                            id: booking.id,
+                            hasReview: !!booking.review,
+                            reviewData: booking.review
+                        });
+                    });
+
                     setBookings(data.data);
                     toast.success(data.message || "Bookings loaded successfully");
+                } else if (Array.isArray(data)) {
+                    console.log("⚠️ API returned array directly");
+                    data.forEach((booking: Booking, index: number) => {
+                        console.log(`📋 Booking ${index}:`, {
+                            id: booking.id,
+                            hasReview: !!booking.review,
+                            reviewData: booking.review
+                        });
+                    });
+                    setBookings(data);
+                    toast.success("Bookings loaded successfully");
                 } else {
                     toast.error(data.message || "No bookings found");
                 }
             } catch (error: any) {
-                console.error(" Error fetching bookings:", error);
+                console.error("❌ Error fetching bookings:", error);
                 toast.error(error.message || "Failed to load bookings");
             } finally {
                 setLoading(false);
@@ -83,43 +100,152 @@ export default function ReviewsPage() {
         fetchBookings();
     }, []);
 
-    // Check if booking is reviewable
+    // FIXED: Enhanced function to check if booking is reviewable
     const isBookingReviewable = (booking: Booking): boolean => {
-        // Check if booking is COMPLETED
+        const bookingId = booking.id.substring(0, 8);
+
+        console.log(`\n🔍 === CHECKING REVIEWABILITY FOR BOOKING ${bookingId} ===`);
+        console.log(`📋 Booking Details:`, {
+            id: booking.id,
+            status: booking.status,
+            startTime: booking.startTime,
+            endTime: booking.endTime,
+            hasReview: !!booking.review,
+        });
+
+        // RULE 1: Already reviewed - NOT reviewable
+        if (booking.review) {
+            console.log(`❌ RULE 1 FAILED: Already has a review`);
+            console.log(`✖️ RESULT: NOT REVIEWABLE (Already Reviewed)\n`);
+            return false;
+        }
+        console.log(`✅ RULE 1 PASSED: No existing review`);
+
+        // RULE 2: Status is COMPLETED - IS reviewable
         if (booking.status === "COMPLETED") {
+            console.log(`✅ RULE 2 PASSED: Status is COMPLETED`);
+            console.log(`✔️ RESULT: REVIEWABLE\n`);
             return true;
         }
 
-        // Check if booking end time has passed (for CONFIRMED bookings that are over)
-        if (booking.endTime) {
-            const endTime = new Date(booking.endTime);
-            const now = new Date();
-            return endTime < now;
+        // RULE 3: CANCELLED bookings are NEVER reviewable
+        if (booking.status === "CANCELLED") {
+            console.log(`❌ RULE 3: Status is CANCELLED`);
+            console.log(`✖️ RESULT: NOT REVIEWABLE\n`);
+            return false;
         }
 
+        // RULE 4: PENDING bookings are NEVER reviewable
+        if (booking.status === "PENDING") {
+            console.log(`❌ RULE 4: Status is PENDING`);
+            console.log(`✖️ RESULT: NOT REVIEWABLE\n`);
+            return false;
+        }
+
+        // RULE 5: CONFIRMED + TIME PASSED = FORCE REVIEWABLE
+        if (booking.status === "CONFIRMED") {
+            if (!booking.endTime) {
+                console.log(`❌ RULE 5: CONFIRMED but no end time`);
+                console.log(`✖️ RESULT: NOT REVIEWABLE\n`);
+                return false;
+            }
+
+            // Parse dates correctly - use getTime() for accurate comparison
+            const endTime = new Date(booking.endTime);
+            const now = new Date();
+
+            const endTimeMs = endTime.getTime();
+            const nowMs = now.getTime();
+            const timeDiffMs = nowMs - endTimeMs;
+            const timeDiffMinutes = Math.floor(timeDiffMs / (1000 * 60));
+            const timeDiffHours = Math.floor(timeDiffMinutes / 60);
+
+            console.log(`⏰ RULE 5 - Time Check for CONFIRMED booking:`);
+            console.log(`   End Time: ${endTime.toISOString()}`);
+            console.log(`   Current Time: ${now.toISOString()}`);
+            console.log(`   End Time (ms): ${endTimeMs}`);
+            console.log(`   Now (ms): ${nowMs}`);
+            console.log(`   Difference (ms): ${timeDiffMs}`);
+            console.log(`   Difference (min): ${timeDiffMinutes}`);
+            console.log(`   Difference (hrs): ${timeDiffHours}`);
+
+            // If current time is AFTER end time → session has ended → REVIEWABLE
+            const sessionHasEnded = nowMs > endTimeMs;
+
+            if (!sessionHasEnded) {
+                console.log(`⏰ Session has NOT ended yet (ends in ${Math.abs(timeDiffMinutes)} minutes)`);
+                console.log(`✖️ RESULT: NOT REVIEWABLE\n`);
+                return false;
+            }
+
+            console.log(`✅ RULE 5 PASSED: CONFIRMED + Session ended ${timeDiffMinutes} minutes ago`);
+            console.log(`✔️ RESULT: **FORCE REVIEWABLE**\n`);
+            return true;
+        }
+
+        console.log(`⚠️ Unexpected status: ${booking.status}`);
+        console.log(`✖️ RESULT: NOT REVIEWABLE\n`);
         return false;
     };
 
     // Check if booking is in the future
     const isBookingFuture = (booking: Booking): boolean => {
-        if (booking.startTime) {
-            const startTime = new Date(booking.startTime);
-            const now = new Date();
-            return startTime > now;
+        if (!booking.startTime) {
+            return false;
         }
-        return false;
+
+        const startTime = new Date(booking.startTime);
+        const now = new Date();
+        const isFuture = startTime.getTime() > now.getTime();
+
+        return isFuture;
+    };
+
+    // Check if booking is currently in progress
+    const isBookingInProgress = (booking: Booking): boolean => {
+        if (!booking.startTime || !booking.endTime) {
+            return false;
+        }
+
+        const startTime = new Date(booking.startTime);
+        const endTime = new Date(booking.endTime);
+        const now = new Date();
+
+        const nowMs = now.getTime();
+        const inProgress = nowMs >= startTime.getTime() && nowMs <= endTime.getTime();
+
+        return inProgress;
     };
 
     // Filter bookings based on selection
     const filteredBookings = bookings.filter(booking => {
         if (filter === "REVIEWABLE") {
-            return isBookingReviewable(booking);
+            const reviewable = isBookingReviewable(booking);
+            console.log(`🔎 Filter result for ${booking.id.substring(0, 8)}: ${reviewable ? '✅ INCLUDED' : '❌ EXCLUDED'}`);
+            return reviewable;
         }
         return true;
     });
 
+    console.log(`\n📊 ============ FILTER SUMMARY ============`);
+    console.log(`   Total Bookings: ${bookings.length}`);
+    console.log(`   Filter Mode: ${filter}`);
+    console.log(`   Filtered Results: ${filteredBookings.length}`);
+    console.log(`   Reviewable Count: ${bookings.filter(isBookingReviewable).length}`);
+    console.log(`==========================================\n`);
+
     // Open review modal
     const handleOpenReviewModal = (booking: Booking) => {
+        console.log("\n🎯 === OPENING REVIEW MODAL ===");
+        console.log("🎯 Booking ID:", booking.id);
+
+        if (booking.review) {
+            console.log("❌ Modal blocked: Already reviewed");
+            toast.error("You have already reviewed this booking");
+            return;
+        }
+
+        console.log("✅ Modal opening");
         setSelectedBooking(booking);
         setReviewRating(5);
         setReviewComment("");
@@ -127,16 +253,20 @@ export default function ReviewsPage() {
         setShowReviewModal(true);
     };
 
-    // Submit review
+    // Submit review using the new server action
     const handleSubmitReview = async () => {
         if (!selectedBooking) return;
 
+        console.log("\n📤 === SUBMITTING REVIEW ===");
+
         if (!reviewRating) {
+            console.log("❌ Validation failed: No rating");
             toast.error("Please select a rating");
             return;
         }
 
         if (reviewComment.trim().length < 10) {
+            console.log("❌ Validation failed: Comment too short");
             toast.error("Please write a review with at least 10 characters");
             return;
         }
@@ -144,46 +274,104 @@ export default function ReviewsPage() {
         try {
             setSubmittingReview(true);
 
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student/reviews`,
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        bookingId: selectedBooking.id,
-                        rating: reviewRating,
-                        comment: reviewComment.trim()
-                    })
-                }
-            );
+            const reviewData = {
+                tutorProfileId: selectedBooking.tutorProfileId,
+                bookingId: selectedBooking.id,
+                rating: reviewRating,
+                comment: reviewComment.trim()
+            };
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Failed to submit review: ${response.status}`);
-            }
+            console.log("📤 Submitting review:", reviewData);
 
-            const data = await response.json();
+            const response = await submitReviewAction(reviewData);
 
-            if (data.success) {
-                toast.success(data.message || "Review submitted successfully!");
+            console.log("📥 Response:", response);
 
-                // Remove the booking from reviewable list
+            if (response.success) {
+                console.log("✅ Review submitted successfully");
+                toast.success(response.message || "Review submitted successfully!");
+
+                // Update the booking in state
                 setBookings(prevBookings =>
-                    prevBookings.filter(b => b.id !== selectedBooking.id)
+                    prevBookings.map(b =>
+                        b.id === selectedBooking.id
+                            ? {
+                                ...b,
+                                review: {
+                                    id: response.data?.id || 'temp',
+                                    bookingId: b.id,
+                                    rating: reviewRating,
+                                    comment: reviewComment,
+                                    createdAt: new Date().toISOString()
+                                }
+                            }
+                            : b
+                    )
                 );
 
                 // Close modal
                 setShowReviewModal(false);
                 setSelectedBooking(null);
+            } else {
+                console.log("❌ Submission failed:", response.message);
+                toast.error(response.message || "Failed to submit review");
             }
         } catch (error: any) {
-            console.error(" Error submitting review:", error);
+            console.error("❌ Error:", error);
             toast.error(error.message || "Failed to submit review");
         } finally {
             setSubmittingReview(false);
+        }
+    };
+
+    // Format date without timezone conversion
+    const formatDateUTC = (dateString: string | null) => {
+        if (!dateString) return "Not scheduled";
+        try {
+            const date = new Date(dateString);
+            const year = date.getUTCFullYear();
+            const month = date.getUTCMonth();
+            const day = date.getUTCDate();
+            const hours = date.getUTCHours();
+            const minutes = date.getUTCMinutes();
+
+            const dateStr = new Date(Date.UTC(year, month, day)).toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                timeZone: "UTC"
+            });
+
+            const timeStr = new Date(Date.UTC(1970, 0, 1, hours, minutes)).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+                timeZone: "UTC"
+            });
+
+            return `${dateStr} ${timeStr}`;
+        } catch {
+            return "Invalid date";
+        }
+    };
+
+    const formatDateOnlyUTC = (dateString: string) => {
+        try {
+            const date = new Date(dateString);
+            const year = date.getUTCFullYear();
+            const month = date.getUTCMonth();
+            const day = date.getUTCDate();
+
+            return new Date(Date.UTC(year, month, day)).toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                timeZone: "UTC"
+            });
+        } catch {
+            return "Invalid date";
         }
     };
 
@@ -217,23 +405,6 @@ export default function ReviewsPage() {
         }
     };
 
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return "Not scheduled";
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch {
-            return "Invalid date";
-        }
-    };
-
     const calculateDuration = (startTime: string | null, endTime: string | null) => {
         if (!startTime || !endTime) return "Not specified";
 
@@ -259,15 +430,6 @@ export default function ReviewsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Your Reviews</h1>
                     <p className="text-gray-600 mt-1">Share your experience with tutors</p>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => window.location.href = '/bookings'}
-                        className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center gap-2"
-                    >
-                        <Calendar className="size-4" />
-                        View Bookings
-                    </button>
                 </div>
             </div>
 
@@ -328,6 +490,8 @@ export default function ReviewsPage() {
                     {filteredBookings.map((booking) => {
                         const reviewable = isBookingReviewable(booking);
                         const futureBooking = isBookingFuture(booking);
+                        const inProgress = isBookingInProgress(booking);
+                        const alreadyReviewed = !!booking.review;
 
                         return (
                             <div key={booking.id} className="bg-white rounded-lg border shadow-sm overflow-hidden">
@@ -342,10 +506,16 @@ export default function ReviewsPage() {
                                                     {getStatusIcon(booking.status)}
                                                     {booking.status.charAt(0) + booking.status.slice(1).toLowerCase()}
                                                 </span>
-                                                {reviewable && (
-                                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 flex items-center gap-1">
+                                                {reviewable && !alreadyReviewed && (
+                                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 flex items-center gap-1 animate-pulse">
                                                         <Star className="size-4" />
                                                         Ready for Review
+                                                    </span>
+                                                )}
+                                                {alreadyReviewed && (
+                                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 border border-purple-200 flex items-center gap-1">
+                                                        <CheckCircle className="size-4" />
+                                                        Reviewed
                                                     </span>
                                                 )}
                                             </div>
@@ -365,7 +535,7 @@ export default function ReviewsPage() {
                                                 <Calendar className="size-4" />
                                                 <span className="text-sm">Start Time</span>
                                             </div>
-                                            <div className="font-medium">{formatDate(booking.startTime)}</div>
+                                            <div className="font-medium">{formatDateUTC(booking.startTime)}</div>
                                         </div>
 
                                         <div className="space-y-1">
@@ -373,7 +543,7 @@ export default function ReviewsPage() {
                                                 <Calendar className="size-4" />
                                                 <span className="text-sm">End Time</span>
                                             </div>
-                                            <div className="font-medium">{formatDate(booking.endTime)}</div>
+                                            <div className="font-medium">{formatDateUTC(booking.endTime)}</div>
                                         </div>
 
                                         <div className="space-y-1">
@@ -393,13 +563,32 @@ export default function ReviewsPage() {
                                         </div>
                                     </div>
 
+                                    {alreadyReviewed && booking.review && (
+                                        <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Star className="size-5 text-yellow-500 fill-yellow-500" />
+                                                <span className="font-semibold text-purple-900">Your Review</span>
+                                                <span className="text-purple-700">({booking.review.rating}.0/5.0)</span>
+                                            </div>
+                                            <p className="text-purple-800">{booking.review.comment}</p>
+                                            <p className="text-sm text-purple-600 mt-2">
+                                                Submitted on {formatDateOnlyUTC(booking.review.createdAt)}
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="flex justify-between items-center pt-4 border-t">
                                         <div className="text-sm text-gray-500">
                                             Booking ID: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{booking.id}</span>
                                         </div>
 
                                         <div className="flex gap-2">
-                                            {reviewable ? (
+                                            {alreadyReviewed ? (
+                                                <div className="px-4 py-2 rounded-lg bg-purple-100 text-purple-700 flex items-center gap-2">
+                                                    <CheckCircle className="size-4" />
+                                                    <span>Already Reviewed</span>
+                                                </div>
+                                            ) : reviewable ? (
                                                 <button
                                                     onClick={() => handleOpenReviewModal(booking)}
                                                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2"
@@ -410,22 +599,19 @@ export default function ReviewsPage() {
                                             ) : futureBooking ? (
                                                 <div className="px-4 py-2 rounded-lg bg-gray-100 text-gray-600 flex items-center gap-2">
                                                     <Clock className="size-4" />
-                                                    <span>Session hasn not started yet</span>
+                                                    <span>Session hasn&apos;t started yet</span>
+                                                </div>
+                                            ) : inProgress ? (
+                                                <div className="px-4 py-2 rounded-lg bg-blue-100 text-blue-600 flex items-center gap-2">
+                                                    <Clock className="size-4" />
+                                                    <span>Session in progress</span>
                                                 </div>
                                             ) : (
                                                 <div className="px-4 py-2 rounded-lg bg-gray-100 text-gray-600 flex items-center gap-2">
                                                     <Clock className="size-4" />
-                                                    <span>Session in progress</span>
+                                                    <span>Not yet reviewable</span>
                                                 </div>
                                             )}
-
-                                            <button
-                                                onClick={() => window.location.href = `/bookings`}
-                                                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center gap-2"
-                                            >
-                                                <Calendar className="size-4" />
-                                                View Details
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -471,7 +657,6 @@ export default function ReviewsPage() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6">
-                            {/* Modal Header */}
                             <div className="flex justify-between items-center mb-6">
                                 <div>
                                     <h2 className="text-xl font-bold text-gray-800">Write a Review</h2>
@@ -490,7 +675,6 @@ export default function ReviewsPage() {
                                 </button>
                             </div>
 
-                            {/* Booking Summary */}
                             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
                                 <h3 className="font-semibold text-gray-800 mb-3">Session Details</h3>
                                 <div className="space-y-2">
@@ -500,7 +684,7 @@ export default function ReviewsPage() {
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Date:</span>
-                                        <span className="font-medium">{formatDate(selectedBooking.startTime)}</span>
+                                        <span className="font-medium">{formatDateUTC(selectedBooking.startTime)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Duration:</span>
@@ -513,7 +697,6 @@ export default function ReviewsPage() {
                                 </div>
                             </div>
 
-                            {/* Rating Section */}
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700 mb-3">
                                     Overall Rating *
@@ -546,7 +729,6 @@ export default function ReviewsPage() {
                                 </div>
                             </div>
 
-                            {/* Comment Section */}
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700 mb-3">
                                     Your Review *
@@ -574,18 +756,16 @@ export default function ReviewsPage() {
                                 </div>
                             </div>
 
-                            {/* Tips */}
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                                 <h4 className="font-medium text-blue-800 mb-2">Tips for a great review:</h4>
                                 <ul className="text-sm text-blue-700 space-y-1">
                                     <li>• Be specific about what you learned</li>
-                                    <li>• Mention the tutor's teaching style</li>
+                                    <li>• Mention the tutor&apos;s teaching style</li>
                                     <li>• Note if the session was helpful</li>
                                     <li>• Keep it honest and respectful</li>
                                 </ul>
                             </div>
 
-                            {/* Action Buttons */}
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => {

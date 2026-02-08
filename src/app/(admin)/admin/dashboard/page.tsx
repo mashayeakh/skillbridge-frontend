@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiGet } from "@/lib/api";
 import {
     Users,
     Calendar,
@@ -20,6 +19,7 @@ import {
     Shield,
     XCircle
 } from "lucide-react";
+import { apiGet } from "@/actions/admin";
 
 type Analytics = {
     users: { total: number; students: number; tutors: number };

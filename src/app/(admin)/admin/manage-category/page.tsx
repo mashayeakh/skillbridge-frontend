@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { apiGet, apiPatch, apiPost, apiDelete } from "@/lib/api";
+// import { apiDelete } from "@/lib/api";
 import {
     Search,
     Filter,
@@ -22,6 +22,7 @@ import {
     ChevronDown,
     AlertCircle
 } from "lucide-react";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/actions/admin";
 
 type Category = {
     id: string;

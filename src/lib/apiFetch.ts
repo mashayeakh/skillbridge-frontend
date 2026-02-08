@@ -1,4 +1,7 @@
+"use server"
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+
 
 export async function apiFetch<T>(
     path: string,
@@ -9,6 +12,7 @@ export async function apiFetch<T>(
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
+
             ...(options.headers || {}),
         },
         cache: "no-store",

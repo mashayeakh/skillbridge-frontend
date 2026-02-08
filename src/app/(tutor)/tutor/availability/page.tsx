@@ -2,116 +2,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Clock, Plus, Trash2, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Calendar, Clock, Plus, CheckCircle, XCircle, Loader2, Trash2 } from "lucide-react";
+import { createTutorAvailabilitySlot, deleteTutorAvailabilitySlot, getTutorProfileWithAvailabilities } from "@/actions/tutor";
 
-// ---------------- API Helpers ---------------- //
-// const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-
-async function fetchTutorProfile() {
-  try {
-    // const res = await fetch("http://localhost:5000/api/tutor/me", {
-    //   credentials: "include",
-    // });
-
-
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/me`, {
-      credentials: "include",
-    });
-
-    // Check if response is JSON
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      const text = await res.text();
-      console.error("Server returned non-JSON response:", text);
-      throw new Error("Server error: Expected JSON but got HTML. Check if the API endpoint exists and authentication is working.");
-    }
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || `HTTP error! status: ${res.status}`);
-    }
-
-    return data;
-  } catch (error: any) {
-    console.error("fetchTutorProfile error:", error);
-    throw error;
-  }
-}
-
-async function createTutorAvailability(startTime: string, endTime: string) {
-  try {
-    // const res = await fetch("http://localhost:5000/api/tutor-availability", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   credentials: "include",
-    //   body: JSON.stringify({ startTime, endTime }),
-    // });
-
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor-availability`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ startTime, endTime }),
-    });
-
-
-    // Check if response is JSON
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      const text = await res.text();
-      console.error("Server returned non-JSON response:", text);
-      throw new Error("Server error: Expected JSON but got HTML. Check if the API endpoint '/tutor-availability' exists.");
-    }
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || `HTTP error! status: ${res.status}`);
-    }
-
-    return data;
-  } catch (error: any) {
-    console.error("createTutorAvailability error:", error);
-    throw error;
-  }
-}
-
-async function deleteTutorAvailability(id: string) {
-  try {
-    // const res = await fetch(`http://localhost:5000/api/tutor-availability/${id}`, {
-    //   method: "DELETE",
-    //   credentials: "include",
-    // });
-
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor-availability/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-
-    // Check if response is JSON
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      const text = await res.text();
-      console.error("Server returned non-JSON response:", text);
-      throw new Error("Server error: Expected JSON but got HTML. Check if the DELETE endpoint exists.");
-    }
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || `HTTP error! status: ${res.status}`);
-    }
-
-    return data;
-  } catch (error: any) {
-    console.error("deleteTutorAvailability error:", error);
-    throw error;
-  }
-}
-
-// ---------------- Component ---------------- //
 
 export default function TutorAvailabilityPage() {
   const [startTime, setStartTime] = useState("");
@@ -121,18 +14,26 @@ export default function TutorAvailabilityPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  // Fetch availabilities on mount
+  // Fetch availabilities on mount using Server Action
   useEffect(() => {
     loadAvailabilities();
   }, []);
 
   const loadAvailabilities = async () => {
     try {
-      const res = await fetchTutorProfile();
-      setSlots(res.data.availabilities || []);
+      const result = await getTutorProfileWithAvailabilities();
+
+      if (!result.success) {
+        throw new Error(result.message || "Failed to load availabilities");
+      }
+
+      setSlots(result.data.availabilities || []);
     } catch (err: any) {
-      console.error(err);
-      setMessage({ text: err.message || "Failed to load availabilities", type: "error" });
+      console.error("Load availabilities error:", err);
+      setMessage({
+        text: err.message || "Failed to load availabilities",
+        type: "error"
+      });
     }
   };
 
@@ -141,12 +42,18 @@ export default function TutorAvailabilityPage() {
 
     // Validation
     if (!startTime || !endTime) {
-      setMessage({ text: "Please select both start and end times", type: "error" });
+      setMessage({
+        text: "Please select both start and end times",
+        type: "error"
+      });
       return;
     }
 
     if (new Date(startTime) >= new Date(endTime)) {
-      setMessage({ text: "End time must be after start time", type: "error" });
+      setMessage({
+        text: "End time must be after start time",
+        type: "error"
+      });
       return;
     }
 
@@ -154,15 +61,28 @@ export default function TutorAvailabilityPage() {
     setMessage({ text: "", type: "" });
 
     try {
-      const res = await createTutorAvailability(startTime, endTime);
-      setSlots((prev) => [...prev, res.data]);
-      setMessage({ text: "Availability slot created successfully! 🎉", type: "success" });
+      const result = await createTutorAvailabilitySlot(startTime, endTime);
+
+      console.log("RESSULKLKLTT", result)
+
+      if (!result.success) {
+        throw new Error(result.message || "Failed to create availability slot");
+      }
+
+      setSlots((prev) => [...prev, result.data]);
+      setMessage({
+        text: "Availability slot created successfully! 🎉",
+        type: "success"
+      });
       setStartTime("");
       setEndTime("");
 
       setTimeout(() => setMessage({ text: "", type: "" }), 3000);
     } catch (err: any) {
-      setMessage({ text: err.message || "Failed to create availability slot", type: "error" });
+      setMessage({
+        text: err.message || "Failed to create availability slot",
+        type: "error"
+      });
     } finally {
       setLoading(false);
     }
@@ -173,24 +93,61 @@ export default function TutorAvailabilityPage() {
 
     setDeletingId(id);
     try {
-      await deleteTutorAvailability(id);
+      const result = await deleteTutorAvailabilitySlot(id);
+
+      if (!result.success) {
+        throw new Error(result.message || "Failed to delete slot");
+      }
+
       setSlots((prev) => prev.filter((slot) => slot.id !== id));
-      setMessage({ text: "Slot deleted successfully", type: "success" });
+      setMessage({
+        text: "Slot deleted successfully",
+        type: "success"
+      });
       setTimeout(() => setMessage({ text: "", type: "" }), 3000);
     } catch (err: any) {
-      setMessage({ text: err.message || "Failed to delete slot", type: "error" });
+      setMessage({
+        text: err.message || "Failed to delete slot",
+        type: "error"
+      });
     } finally {
       setDeletingId(null);
     }
   };
 
-  // ----------------- Helpers for display ----------------- //
+  // ----------------- Helpers for display - NO TIMEZONE CONVERSION ----------------- //
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  // Format date without timezone conversion (shows exactly what's stored)
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    // Use UTC methods to avoid timezone shifts
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth();
+    const day = date.getUTCDate();
 
-  const formatTime = (dateString: string) =>
-    new Date(dateString).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    return new Date(Date.UTC(year, month, day)).toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC"
+    });
+  };
+
+  // Format time without timezone conversion (shows exactly what's stored)
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    // Use UTC methods to avoid timezone shifts
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+
+    return new Date(Date.UTC(1970, 0, 1, hours, minutes)).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "UTC"
+    });
+  };
 
   const getDuration = (start: string, end: string) => {
     const diffMs = new Date(end).getTime() - new Date(start).getTime();
@@ -200,8 +157,13 @@ export default function TutorAvailabilityPage() {
   };
 
   const getTimeUntil = (dateString: string) => {
-    const diffMs = new Date(dateString).getTime() - new Date().getTime();
+    const slotDate = new Date(dateString);
+    const nowDate = new Date();
+
+    // Calculate difference in days
+    const diffMs = slotDate.getTime() - nowDate.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
     if (diffDays < 0) return "Past";
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "Tomorrow";
@@ -263,6 +225,9 @@ export default function TutorAvailabilityPage() {
                     required
                   />
                 </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  Select your local time
+                </div>
               </div>
 
               {/* End Time */}
@@ -279,6 +244,9 @@ export default function TutorAvailabilityPage() {
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  Time will display as selected
                 </div>
               </div>
             </div>
@@ -304,15 +272,15 @@ export default function TutorAvailabilityPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
             <div className="text-3xl font-bold text-blue-600">{slots.length}</div>
             <div className="text-sm text-gray-600">Total Slots</div>
           </div>
-          {/* <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
             <div className="text-3xl font-bold text-green-600">{upcomingSlots.length}</div>
             <div className="text-sm text-gray-600">Upcoming</div>
-          </div> */}
+          </div>
           <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
             <div className="text-3xl font-bold text-gray-600">{pastSlots.length}</div>
             <div className="text-sm text-gray-600">Past</div>

@@ -17,6 +17,8 @@ import {
     BarChart3,
     Sparkles
 } from 'lucide-react';
+import { getTutorDashboardData } from '@/actions/tutor';
+
 
 interface BasicStats {
     tutorName: string;
@@ -40,95 +42,60 @@ interface TutorStats {
     conversionRate: number;
 }
 
+interface DashboardData {
+    basicStats: BasicStats | null;
+    reviewsSummary: ReviewsSummary | null;
+    tutorStats: TutorStats | null;
+}
+
 export default function TutorDashboardPage() {
     const [loading, setLoading] = useState(true);
-    const [basicStats, setBasicStats] = useState<BasicStats | null>(null);
-    const [reviewsSummary, setReviewsSummary] = useState<ReviewsSummary | null>(null);
-    const [tutorStats, setTutorStats] = useState<TutorStats | null>(null);
+    const [dashboardData, setDashboardData] = useState<DashboardData>({
+        basicStats: null,
+        reviewsSummary: null,
+        tutorStats: null
+    });
 
-    // Fetch all dashboard data
+    // Fetch all dashboard data using Server Action
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
                 setLoading(true);
+                console.log('📡 Fetching dashboard data via Server Action...');
 
-                console.log('📡 Fetching dashboard data...');
+                const result = await getTutorDashboardData();
+                console.log('📦 Dashboard API result:', result);
 
-                // Make all API calls in parallel
-                const [basicRes, reviewsRes, statsRes] = await Promise.all([
-                    // REMOVED trailing slash from URL
-                    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/dashboard/overall`, {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                    }),
-                    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/dashboard/reviews/summary`, {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                    }),
-                    // CORRECTED endpoint URL
-                    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/dashboard/overall/stats`, {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                    }),
-                ]);
-
-                console.log('📥 Responses received:', {
-                    basicStatus: basicRes.status,
-                    reviewsStatus: reviewsRes.status,
-                    statsStatus: statsRes.status
-                });
-
-                // Parse responses
-                let basicData, reviewsData, statsData;
-
-                try {
-                    basicData = await basicRes.json();
-                    console.log('📦 Basic data:', basicData);
-                } catch (error) {
-                    console.error(' Failed to parse basic data:', error);
+                if (!result.success) {
+                    toast.error(result.message || 'Failed to load dashboard data');
+                    console.error('Dashboard error:', result);
+                    return;
                 }
 
-                try {
-                    reviewsData = await reviewsRes.json();
-                    console.log('📦 Reviews data:', reviewsData);
-                } catch (error) {
-                    console.error(' Failed to parse reviews data:', error);
-                }
+                if (result.data) {
+                    setDashboardData({
+                        basicStats: result.data.basicStats,
+                        reviewsSummary: result.data.reviewsSummary,
+                        tutorStats: result.data.tutorStats
+                    });
 
-                try {
-                    statsData = await statsRes.json();
-                    console.log('📦 Stats data:', statsData);
-                } catch (error) {
-                    console.error(' Failed to parse stats data:', error);
-                }
+                    // Show errors if any (but still show partial data)
+                    if (result.errors?.basicError) {
+                        toast.error(result.errors.basicError);
+                    }
+                    if (result.errors?.statsError) {
+                        toast.error(result.errors.statsError);
+                    }
 
-                // Set state based on responses
-                if (basicData?.success) {
-                    setBasicStats(basicData.data);
-                    console.log(' Basic stats set:', basicData.data);
-                } else {
-                    toast.error(basicData?.message || 'Failed to load basic stats');
-                }
-
-                if (reviewsData?.success) {
-                    setReviewsSummary(reviewsData.data);
-                    console.log(' Reviews summary set:', reviewsData.data);
-                } else {
-                    console.log('⚠️ No reviews data:', reviewsData?.message);
-                }
-
-                if (statsData?.success) {
-                    setTutorStats(statsData.data);
-                    console.log(' Tutor stats set:', statsData.data);
-                } else {
-                    toast.error(statsData?.message || 'Failed to load tutor stats');
+                    console.log('✅ Dashboard data loaded:', {
+                        basicStats: result.data.basicStats,
+                        reviewsSummary: result.data.reviewsSummary,
+                        tutorStats: result.data.tutorStats
+                    });
                 }
 
             } catch (err: any) {
-                console.error(' Error fetching dashboard:', err);
+                console.error('🚨 Error fetching dashboard:', err);
                 toast.error(`Error fetching dashboard data: ${err.message || err}`);
             } finally {
                 setLoading(false);
@@ -141,14 +108,9 @@ export default function TutorDashboardPage() {
     // Debug: Log current state
     useEffect(() => {
         if (!loading) {
-            console.log('🔄 Current state:', {
-                basicStats,
-                reviewsSummary,
-                tutorStats,
-                loading
-            });
+            console.log('🔄 Current dashboard state:', dashboardData);
         }
-    }, [loading, basicStats, reviewsSummary, tutorStats]);
+    }, [loading, dashboardData]);
 
     const getRatingColor = (rating: number) => {
         if (rating >= 4.5) return 'text-emerald-500';
@@ -175,8 +137,8 @@ export default function TutorDashboardPage() {
         );
     }
 
-    // If no data is loaded, show error state
-    if (!basicStats) {
+    // If no basic stats data is loaded, show error state
+    if (!dashboardData.basicStats) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
                 <div className="text-center">
@@ -196,6 +158,7 @@ export default function TutorDashboardPage() {
         );
     }
 
+    const { basicStats, reviewsSummary, tutorStats } = dashboardData;
     const totalReviews = reviewsSummary ? Object.values(reviewsSummary).reduce((a, b) => a + b, 0) : 0;
     const ratingDistribution = reviewsSummary ? Object.entries(reviewsSummary).map(([star, count]) => ({
         star,
@@ -205,8 +168,6 @@ export default function TutorDashboardPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6 lg:p-8">
-
-
             {/* Header */}
             <div className="mb-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
@@ -231,7 +192,7 @@ export default function TutorDashboardPage() {
             </div>
 
             {/* Main Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-8">
                 {/* Hourly Rate Card */}
                 <Card className="p-5 bg-gradient-to-br from-white to-blue-50 border-blue-100 hover:shadow-lg transition-shadow duration-300">
                     <div className="flex items-center justify-between mb-3">
@@ -319,29 +280,11 @@ export default function TutorDashboardPage() {
                     <p className="text-2xl font-bold text-gray-900">{basicStats?.totalBookings || 0}</p>
                     <p className="text-xs text-gray-400 mt-2">sessions completed</p>
                 </Card>
-
-                {/* Students Card */}
-                <Card className="p-5 bg-gradient-to-br from-white to-indigo-50 border-indigo-100 hover:shadow-lg transition-shadow duration-300">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="p-2 bg-indigo-100 rounded-lg">
-                            <Users className="w-5 h-5 text-indigo-600" />
-                        </div>
-                        <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
-                            Growth
-                        </span>
-                    </div>
-                    <p className="text-gray-500 text-sm font-medium mb-1">Conversion Rate</p>
-                    <p className={`text-2xl font-bold ${getConversionColor(tutorStats?.conversionRate || 0)}`}>
-                        {tutorStats?.conversionRate || 0}%
-                    </p>
-                    <p className="text-xs text-gray-400 mt-2">booking conversion</p>
-                </Card>
             </div>
 
             {/* Performance Metrics Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                {/* Reviews Summary Card - Only show if we have reviews data */}
-                {reviewsSummary && (
+            <div className="grid lg:grid-cols-1 gap-6 mb-8">
+                {reviewsSummary && totalReviews > 0 && (
                     <Card className="lg:col-span-2 p-6 border-gray-200 hover:shadow-lg transition-shadow duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <div>
@@ -461,25 +404,14 @@ export default function TutorDashboardPage() {
             </div>
 
             {/* Quick Stats Footer */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
+            {/* <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl">
-                        <p className="text-sm text-gray-600">Today's Potential</p>
+                        <p className="text-sm text-gray-600">Today is Potential</p>
                         <p className="text-lg font-bold text-gray-900">${((basicStats?.hourlyRate || 0) * 3).toFixed(0)}</p>
-                        <p className="text-xs text-gray-500">based on 3 average sessions</p>
-                    </div>
-                    <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl">
-                        <p className="text-sm text-gray-600">Monthly Trend</p>
-                        <p className="text-lg font-bold text-green-600">+12.5%</p>
-                        <p className="text-xs text-gray-500">growth in bookings</p>
-                    </div>
-                    <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl">
-                        <p className="text-sm text-gray-600">Student Satisfaction</p>
-                        <p className="text-lg font-bold text-emerald-600">94%</p>
-                        <p className="text-xs text-gray-500">positive feedback</p>
                     </div>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 }

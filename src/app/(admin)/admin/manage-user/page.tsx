@@ -2,10 +2,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { apiGet, apiPatch } from "@/lib/api";
 import { Search, Filter, MoreVertical, Edit, Trash2, CheckCircle, XCircle, RefreshCw, Download, Ban, ShieldCheck } from "lucide-react";
 import debounce from "lodash/debounce";
 import { toast } from "sonner";
+import { apiGet, apiPatch } from "@/actions/admin";
 
 type User = {
     id: string;

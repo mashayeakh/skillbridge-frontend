@@ -3,40 +3,24 @@
 
 import { useEffect, useState } from "react";
 import {
-    getDashboardSummary,
-    getUpcomingBookings,
-    getRecentBookings,
-    getLearningProgress,
-    getQuickActions,
-} from "@/lib/student-dashboard.api";
-import {
     Calendar,
     Clock,
     DollarSign,
     BookOpen,
     TrendingUp,
-    UserCheck,
-    Star,
     CheckCircle,
     AlertCircle,
     XCircle,
     Users,
-    BarChart3,
-    Target,
+    Star,
     Zap,
     Sparkles,
-    MoreVertical,
-    MessageSquare,
     Video,
     Brain,
     FileText,
-    Bell,
-    ThumbsUp,
     ChevronRight,
-    Download,
     Award,
     Trophy,
-    TrendingDown,
     BookMarked,
     GraduationCap
 } from "lucide-react";
@@ -46,14 +30,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui2/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui2/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui2/skeleton";
+import { apiFetchStd } from "@/actions/student";
 
 export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
@@ -69,35 +47,70 @@ export default function DashboardPage() {
         async function loadDashboard() {
             try {
                 setLoading(true);
+                setError(null);
 
-                const [
-                    summaryRes,
-                    upcomingRes,
-                    recentRes,
-                    progressRes,
-                    quickActionsRes,
-                ] = await Promise.all([
-                    getDashboardSummary(),
-                    getUpcomingBookings(),
-                    getRecentBookings(),
-                    getLearningProgress(),
-                    getQuickActions(),
-                ]);
+                console.log('📡 Fetching student dashboard data...');
 
-                setSummary(summaryRes.data);
-                setUpcomingBookings(upcomingRes.data);
-                setRecentBookings(recentRes.data);
-                setLearningProgress(progressRes.data.bySubject);
-                setQuickActions(quickActionsRes.data);
+                const summaryRes = await apiFetchStd("/api/student/dashboard");
+                const upcomingRes = await apiFetchStd("/api/student/dashboard/bookings/upcoming");
+                const recentRes = await apiFetchStd("/api/student/dashboard/bookings/recent?limit=5");
+                const learningProgressRes = await apiFetchStd("/api/student/dashboard/analytics/progress");
+                const quickActionsRes = await apiFetchStd("/api/student/dashboard/quick-actions");
+
+                console.log('📦 Responses:', { summaryRes, upcomingRes, recentRes, learningProgressRes, quickActionsRes });
+
+                // Set data
+                if (summaryRes?.success) {
+                    setSummary(summaryRes.data);
+                    console.log('✅ Summary loaded:', summaryRes.data);
+                }
+
+                if (upcomingRes?.success) {
+                    setUpcomingBookings(upcomingRes.data || []);
+                    console.log('✅ Upcoming bookings loaded:', upcomingRes.data);
+                }
+
+                if (recentRes?.success) {
+                    setRecentBookings(recentRes.data || []);
+                    console.log('✅ Recent bookings loaded:', recentRes.data);
+                }
+
+                if (learningProgressRes?.success) {
+                    setLearningProgress(learningProgressRes.data?.bySubject || []);
+                    console.log('✅ Learning progress loaded:', learningProgressRes.data?.bySubject);
+                }
+
+                if (quickActionsRes?.success) {
+                    setQuickActions(quickActionsRes.data);
+                    console.log('✅ Quick actions loaded:', quickActionsRes.data);
+                }
+
             } catch (err: any) {
-                setError(err.message || "Failed to load dashboard");
+                console.error('❌ Error loading dashboard:', err);
+
+                // Safely extract error message
+                let errorMessage = 'Failed to load dashboard';
+                if (err instanceof Error) {
+                    errorMessage = err.message;
+                } else if (typeof err === 'string') {
+                    errorMessage = err;
+                } else if (err && typeof err === 'object') {
+                    errorMessage = err.message || err.toString() || 'Unknown error';
+                }
+
+                setError(errorMessage);
             } finally {
+                // 🔥 THIS WAS MISSING!
                 setLoading(false);
+                console.log('✅ Dashboard loading complete');
             }
         }
 
         loadDashboard();
     }, []);
+
+    console.log("SU", summary);
+    console.log("up", upcomingBookings);
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
@@ -172,58 +185,48 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 </div>
-                <div className="flex flex-wrap gap-3">
-                    {/* <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg">
-                        <BookOpen className="h-4 w-4 mr-2" />
-                        Book New Session
-                    </Button> */}
-                    {/* <Button variant="outline" className="border-input">
-                        <Download className="h-4 w-4 mr-2" />
-                        Export Data
-                    </Button> */}
-                </div>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     title="Total Sessions"
-                    value={summary.totalBookings}
+                    value={summary.totalBookings || 0}
                     icon={<Calendar className="h-5 w-5" />}
                     color="bg-blue-500"
                     description="All time bookings"
                 />
                 <StatCard
                     title="Upcoming"
-                    value={summary.upcomingBookings}
+                    value={summary.upcomingBookings || 0}
                     icon={<Clock className="h-5 w-5" />}
                     color="bg-emerald-500"
                     description="Scheduled sessions"
                 />
                 <StatCard
                     title="Total Hours"
-                    value={summary.totalHours}
+                    value={summary.totalHours?.toFixed(1) || 0}
                     icon={<Clock className="h-5 w-5" />}
                     color="bg-violet-500"
                     description="Learning time"
                 />
                 <StatCard
                     title="Total Spent"
-                    value={`$${summary.totalSpent}`}
+                    value={`$${summary.totalSpent?.toFixed(2) || 0}`}
                     icon={<DollarSign className="h-5 w-5" />}
                     color="bg-amber-500"
                     description="Total investment"
                 />
                 <StatCard
                     title="Completed"
-                    value={summary.completedBookings}
+                    value={summary.completedBookings || 0}
                     icon={<CheckCircle className="h-5 w-5" />}
                     color="bg-green-500"
                     description="Finished sessions"
                 />
                 <StatCard
                     title="Cancelled"
-                    value={summary.cancelledBookings}
+                    value={summary.cancelledBookings || 0}
                     icon={<XCircle className="h-5 w-5" />}
                     color="bg-rose-500"
                     description="Cancelled sessions"
@@ -237,7 +240,7 @@ export default function DashboardPage() {
                 />
                 <StatCard
                     title="Success Rate"
-                    value={`${((summary.completedBookings / summary.totalBookings) * 100 || 0).toFixed(0)}%`}
+                    value={`${summary.totalBookings > 0 ? ((summary.completedBookings / summary.totalBookings) * 100).toFixed(0) : 0}%`}
                     icon={<TrendingUp className="h-5 w-5" />}
                     color="bg-indigo-500"
                     description="Completion ratio"
@@ -255,10 +258,6 @@ export default function DashboardPage() {
                             </CardTitle>
                             <CardDescription>Things you can do right now</CardDescription>
                         </div>
-                        {/* <Badge variant="outline" className="gap-1">
-                            <Bell className="h-3 w-3" />
-                            Updates
-                        </Badge> */}
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -284,20 +283,17 @@ export default function DashboardPage() {
                             color="bg-amber-500/10 text-amber-700"
                             actionLabel="Confirm"
                         />
-                        {/* <QuickActionCard
-                            label="Unread Notifications"
-                            value={quickActions?.unreadNotifications || 0}
-                            icon={<Bell className="h-4 w-4" />}
-                            color="bg-violet-500/10 text-violet-700"
-                            actionLabel="View All"
-                        /> */}
                     </div>
                 </CardContent>
             </Card>
 
             {/* Main Content Tabs */}
             <Tabs defaultValue="sessions" className="space-y-6">
-
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="sessions">Upcoming Sessions</TabsTrigger>
+                    {/* <TabsTrigger value="recent">Recent Bookings</TabsTrigger>
+                    <TabsTrigger value="progress">Learning Progress</TabsTrigger> */}
+                </TabsList>
 
                 <TabsContent value="sessions" className="space-y-6">
                     <Card>
@@ -345,10 +341,6 @@ export default function DashboardPage() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    {/* <Badge className={`${getStatusColor(booking.status)} border capitalize`}>
-                                                        {getStatusIcon(booking.status)}
-                                                        {booking.status}
-                                                    </Badge> */}
                                                 </div>
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                                     <div className="flex items-center gap-2">
@@ -369,36 +361,11 @@ export default function DashboardPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            {/* <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem>
-                                                        <Video className="h-4 w-4 mr-2" />
-                                                        Join Session
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem>
-                                                        <MessageSquare className="h-4 w-4 mr-2" />
-                                                        Message Tutor
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu> */}
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </CardContent>
-                        {/* {upcomingBookings.length > 0 && (
-                            <CardFooter>
-                                <Button variant="outline" className="w-full">
-                                    View All Sessions
-                                    <ChevronRight className="h-4 w-4 ml-2" />
-                                </Button>
-                            </CardFooter>
-                        )} */}
                     </Card>
                 </TabsContent>
 
@@ -480,10 +447,6 @@ export default function DashboardPage() {
                                     <Brain className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
                                     <h3 className="text-lg font-semibold mb-2">No learning data yet</h3>
                                     <p className="text-muted-foreground mb-4">Complete sessions to see your progress</p>
-                                    {/* <Button>
-                                        <BookMarked className="h-4 w-4 mr-2" />
-                                        Start Learning
-                                    </Button> */}
                                 </div>
                             ) : (
                                 <div className="space-y-6">
@@ -542,40 +505,6 @@ export default function DashboardPage() {
             </Tabs>
 
             {/* Performance Summary */}
-            <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-                <CardContent className="pt-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div>
-                            <div className="flex items-center gap-3 mb-3">
-                                <Award className="h-6 w-6 text-primary" />
-                                <h3 className="text-xl font-bold">Performance Summary</h3>
-                            </div>
-                            <p className="text-muted-foreground mb-4">
-                                You have completed {summary.completedBookings} sessions with an average rating of {summary.averageRating || "N/A"}.
-                                Keep up the great work!
-                            </p>
-                            <div className="flex flex-wrap gap-6">
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                                    <span className="font-semibold">{summary.completedBookings} Completed</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                                    <span className="font-semibold">{summary.averageRating || "N/A"} Avg Rating</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-blue-500" />
-                                    <span className="font-semibold">{summary.totalHours} Hours</span>
-                                </div>
-                            </div>
-                        </div>
-                        {/* <Button variant="outline" className="border-primary/30 hover:bg-primary/10">
-                            View Detailed Report
-                            <ChevronRight className="h-4 w-4 ml-2" />
-                        </Button> */}
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     );
 }
@@ -634,9 +563,6 @@ function QuickActionCard({
                 </div>
                 <div className="text-3xl font-bold mb-1">{value}</div>
                 <p className="text-sm text-muted-foreground mb-4">{label}</p>
-                {/* <Button size="sm" variant="outline" className="w-full">
-                    {actionLabel}
-                </Button> */}
             </CardContent>
         </Card>
     );

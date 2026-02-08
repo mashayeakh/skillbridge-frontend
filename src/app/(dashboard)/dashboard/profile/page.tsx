@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui2/progress";
+import { apiFetchUserInfo } from '@/actions/student';
 
 interface SessionData {
     session: {
@@ -71,21 +72,14 @@ export default function ProfileCard() {
     const [tempProfile, setTempProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
     // Fetch session data from backend
     useEffect(() => {
         const fetchSession = async () => {
             try {
-                const res = await fetch(`${BACKEND_URL}/api/student/auth/session`, {
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
+                const data = await apiFetchUserInfo("/api/student/auth/session");
+                console.log("RESS", data);
 
-                if (res.ok) {
-                    const data = await res.json();
+                if (data) {
                     setSessionData(data);
                     setTempProfile(data.user);
                 }
@@ -97,11 +91,11 @@ export default function ProfileCard() {
         };
 
         fetchSession();
-    }, [BACKEND_URL]);
+    }, []);
 
     const handleEditClick = () => {
         if (isEditing) {
-            // Save changes (implement API call here)
+            // Save changes
             if (sessionData) {
                 setSessionData({
                     ...sessionData,
@@ -121,8 +115,8 @@ export default function ProfileCard() {
 
     const handleSave = async () => {
         try {
-            // Implement API call to save profile
-            // const res = await fetch(`${BACKEND_URL}/api/student/profile`, {
+            // Implement API call to save profile if needed
+            // const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student/profile`, {
             //     method: 'PATCH',
             //     credentials: 'include',
             //     headers: { 'Content-Type': 'application/json' },
@@ -191,6 +185,22 @@ export default function ProfileCard() {
             return date.toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return 'Invalid date';
+        }
+    };
+
+    const formatDateTime = (dateString: string) => {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit'
             });
@@ -351,7 +361,8 @@ export default function ProfileCard() {
                                         <Mail className="h-5 w-5 text-blue-600" />
                                     </div>
                                     <div className="text-sm">
-                                        <div className="font-medium">{user.email}</div>
+                                        <div className="font-medium truncate">{user.email}</div>
+                                        <div className="text-xs text-gray-500">Email</div>
                                     </div>
                                 </div>
 
@@ -361,6 +372,7 @@ export default function ProfileCard() {
                                     </div>
                                     <div className="text-sm">
                                         <div className="font-medium">{user.phone}</div>
+                                        <div className="text-xs text-gray-500">Phone</div>
                                     </div>
                                 </div>
 
@@ -370,6 +382,7 @@ export default function ProfileCard() {
                                     </div>
                                     <div className="text-sm">
                                         <div className="font-medium">Joined {user.joinedDate}</div>
+                                        <div className="text-xs text-gray-500">Member Since</div>
                                     </div>
                                 </div>
                             </div>
@@ -378,58 +391,56 @@ export default function ProfileCard() {
                 </CardContent>
             </Card>
 
-            {/* Stats Section with Real Data */}
-            {!isEditing && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <BookOpen className="h-5 w-5 text-blue-600" />
-                            Your Activity Stats
-                        </CardTitle>
-                        <CardDescription>Real-time statistics from your account</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-blue-50 to-white">
-                                <div className="p-2 bg-blue-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                                    <BookOpen className="h-6 w-6 text-blue-600" />
-                                </div>
-                                <div className="text-2xl font-bold text-blue-700">{stats.totalBookings}</div>
-                                <div className="text-sm text-gray-600">Total Bookings</div>
+            {/* Stats Section */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <BookOpen className="h-5 w-5 text-blue-600" />
+                        Your Activity Stats
+                    </CardTitle>
+                    <CardDescription>Real-time statistics from your account</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-blue-50 to-white">
+                            <div className="p-2 bg-blue-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                                <BookOpen className="h-6 w-6 text-blue-600" />
                             </div>
-
-                            <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-green-50 to-white">
-                                <div className="p-2 bg-green-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                                    <Calendar className="h-6 w-6 text-green-600" />
-                                </div>
-                                <div className="text-2xl font-bold text-green-700">{stats.upcomingCount}</div>
-                                <div className="text-sm text-gray-600">Upcoming</div>
-                            </div>
-
-                            <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-amber-50 to-white">
-                                <div className="p-2 bg-amber-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                                    <Clock className="h-6 w-6 text-amber-600" />
-                                </div>
-                                <div className="text-2xl font-bold text-amber-700">{stats.completedCount}</div>
-                                <div className="text-sm text-gray-600">Completed</div>
-                            </div>
-
-                            <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-purple-50 to-white">
-                                <div className="p-2 bg-purple-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                                    <DollarSign className="h-6 w-6 text-purple-600" />
-                                </div>
-                                <div className="text-2xl font-bold text-purple-700">
-                                    ${stats.totalEarned.toLocaleString()}
-                                </div>
-                                <div className="text-sm text-gray-600">Total Spent</div>
-                            </div>
+                            <div className="text-2xl font-bold text-blue-700">{stats.totalBookings}</div>
+                            <div className="text-sm text-gray-600">Total Bookings</div>
                         </div>
-                    </CardContent>
-                </Card>
-            )}
+
+                        <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-green-50 to-white">
+                            <div className="p-2 bg-green-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                                <Calendar className="h-6 w-6 text-green-600" />
+                            </div>
+                            <div className="text-2xl font-bold text-green-700">{stats.upcomingCount}</div>
+                            <div className="text-sm text-gray-600">Upcoming</div>
+                        </div>
+
+                        <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-amber-50 to-white">
+                            <div className="p-2 bg-amber-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                                <Clock className="h-6 w-6 text-amber-600" />
+                            </div>
+                            <div className="text-2xl font-bold text-amber-700">{stats.completedCount}</div>
+                            <div className="text-sm text-gray-600">Completed</div>
+                        </div>
+
+                        <div className="text-center p-4 border rounded-lg bg-gradient-to-br from-purple-50 to-white">
+                            <div className="p-2 bg-purple-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                                <DollarSign className="h-6 w-6 text-purple-600" />
+                            </div>
+                            <div className="text-2xl font-bold text-purple-700">
+                                ${stats.totalEarned.toFixed(2)}
+                            </div>
+                            <div className="text-sm text-gray-600">Total Spent</div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Upcoming Sessions */}
-            {!isEditing && upcomingSessions.length > 0 && (
+            {upcomingSessions.length > 0 && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -452,7 +463,7 @@ export default function ProfileCard() {
                                             </div>
                                             <div className="text-sm text-gray-600 flex items-center gap-2">
                                                 <Clock className="h-3 w-3" />
-                                                {formatDate(session.startTime)}
+                                                {formatDateTime(session.startTime)}
                                                 <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                                                     {calculateDuration(session.startTime, session.endTime)}
                                                 </span>
@@ -476,7 +487,7 @@ export default function ProfileCard() {
             )}
 
             {/* Recent Bookings */}
-            {!isEditing && recentBookings.length > 0 && (
+            {recentBookings.length > 0 && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -508,13 +519,13 @@ export default function ProfileCard() {
                                                     </Avatar>
                                                     <div>
                                                         <div className="font-medium">{booking.tutor.name}</div>
-                                                        <div className="text-sm text-gray-600">{booking.tutor.subject}</div>
+                                                        <div className="text-sm text-gray-600 truncate max-w-[200px]">{booking.tutor.subject}</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="text-sm">
-                                                    {formatDate(booking.startTime)}
+                                                    {formatDateTime(booking.startTime)}
                                                 </div>
                                                 <div className="text-xs text-gray-500">
                                                     Booked: {new Date(booking.createdAt).toLocaleDateString()}
@@ -528,7 +539,7 @@ export default function ProfileCard() {
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-1">
                                                     <DollarSign className="h-4 w-4 text-gray-600" />
-                                                    <span className="font-medium">${booking.price.toLocaleString()}</span>
+                                                    <span className="font-medium">${booking.price.toFixed(2)}</span>
                                                 </div>
                                                 <div className="text-xs text-gray-500">
                                                     ${booking.tutor.rate}/hr
@@ -542,6 +553,48 @@ export default function ProfileCard() {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Session Info Card */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-gray-600" />
+                        Session Information
+                    </CardTitle>
+                    <CardDescription>Current login session details</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <div>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm font-medium text-gray-600">Session Expires</span>
+                                <span className="text-sm text-gray-500">
+                                    {new Date(sessionData.session.expiresAt).toLocaleDateString('en-US', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </span>
+                            </div>
+                            <Progress value={calculateSessionProgress()} className="h-2" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p className="text-gray-500">IP Address</p>
+                                <p className="font-medium">{sessionData.session.ipAddress}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500">Device</p>
+                                <p className="font-medium truncate">{sessionData.session.userAgent}</p>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

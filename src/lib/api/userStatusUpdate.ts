@@ -22,7 +22,7 @@ export async function toggleUserStatus(
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    // Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
                 body: JSON.stringify({ status: newStatus }),
                 credentials: "include",

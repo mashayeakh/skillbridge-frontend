@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Calendar, Clock, User, DollarSign, CheckCircle, XCircle, AlertCircle, Eye, Trash2, Loader2 } from "lucide-react";
+import { apiFetchBooking } from "@/actions/student";
 
 interface TutorProfile {
     id: string;
@@ -39,33 +40,24 @@ export default function BookingsPage() {
                 setLoading(true);
                 console.log("📡 Fetching bookings from API...");
 
-                const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/bookings/my-bookings`,
-                    {
-                        credentials: "include",
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    }
-                );
+                // apiFetchBooking already returns parsed JSON data
+                const data = await apiFetchBooking("/api/bookings/my-bookings");
 
-                console.log("📥 Response status:", response.status);
-
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch bookings: ${response.status}`);
-                }
-
-                const data = await response.json();
                 console.log("📦 API response:", data);
 
+                // Check if the response structure matches your API
                 if (data.success && data.data) {
                     setBookings(data.data);
                     toast.success(data.message || "Bookings loaded successfully");
+                } else if (Array.isArray(data)) {
+                    // If API returns array directly
+                    setBookings(data);
+                    toast.success("Bookings loaded successfully");
                 } else {
                     toast.error(data.message || "No bookings found");
                 }
             } catch (error: any) {
-                console.error(" Error fetching bookings:", error);
+                console.error("❌ Error fetching bookings:", error);
                 toast.error(error.message || "Failed to load bookings");
             } finally {
                 setLoading(false);
@@ -113,7 +105,7 @@ export default function BookingsPage() {
                 toast.success(data.message || "Booking cancelled successfully");
             }
         } catch (error: any) {
-            console.error(" Error cancelling booking:", error);
+            console.error("❌ Error cancelling booking:", error);
             toast.error(error.message || "Failed to cancel booking");
         } finally {
             setCancellingId(null);
@@ -186,6 +178,11 @@ export default function BookingsPage() {
         }
     };
 
+    const handleViewDetails = (bookingId: string) => {
+        // Navigate to booking details page
+        window.location.href = `/bookings/${bookingId}`;
+    };
+
     return (
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
@@ -218,7 +215,7 @@ export default function BookingsPage() {
                     </div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-2">No bookings yet</h3>
                     <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                        You haven not booked any tutoring sessions yet. Find a tutor and schedule your first session!
+                        You haven't booked any tutoring sessions yet. Find a tutor and schedule your first session!
                     </p>
                     <button
                         onClick={() => window.location.href = '/browse-tutor'}
@@ -290,9 +287,10 @@ export default function BookingsPage() {
                                 <div className="flex justify-between items-center pt-4 border-t">
                                     <div className="text-sm text-gray-500">
                                         Booking ID: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{booking.id}</span>
+                                        <span className="ml-4">
+                                            Created: {new Date(booking.createdAt).toLocaleDateString()}
+                                        </span>
                                     </div>
-
-
                                 </div>
                             </div>
                         </div>

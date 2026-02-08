@@ -7,6 +7,7 @@ import { GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { authClient } from '@/lib/auth-clients';
+import { upgradeToTutor } from '@/actions/tutor';
 
 export default function BecomeTutorPage() {
     const [loading, setLoading] = useState(false);
@@ -68,20 +69,18 @@ export default function BecomeTutorPage() {
             console.log('🚀 Starting upgrade...');
 
             // 1. Call upgrade endpoint WITHOUT custom headers
-            const upgradeRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/upgrade`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            const result = await upgradeToTutor();
 
-            const upgradeData = await upgradeRes.json();
-            console.log('📦 Upgrade response:', upgradeData);
 
-            if (!upgradeData.success) {
-                throw new Error(upgradeData.message || 'Failed to upgrade.');
+            // const upgradeData = await upgradeRes.json();
+            console.log('📦 Upgrade response:', result);
+
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to upgrade.');
             }
+
+            console.log('📦 Upgrade response:', result.data);
+
 
             // 2. Show success message
             toast.success('🎉 Success! You are now a tutor.');
@@ -108,24 +107,6 @@ export default function BecomeTutorPage() {
         }
     };
 
-    // // Simple debug function
-    // const debugInfo = async () => {
-    //     console.log('=== DEBUG INFO ===');
-    //     console.log('isTutor state:', isTutor);
-
-    //     const session = await authClient.getSession();
-    //     console.log('Session:', session?.data?.user);
-
-    //     try {
-    //         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/student/profile`, {
-    //             credentials: 'include',
-    //         });
-    //         const data = await res.json();
-    //         console.log('Profile API response:', data);
-    //     } catch (error) {
-    //         console.log('Profile fetch error:', error);
-    //     }
-    // };
 
     console.log("🎯 Current isTutor state:", isTutor);
 

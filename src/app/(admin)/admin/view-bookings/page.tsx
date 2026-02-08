@@ -34,7 +34,8 @@ import {
     Minus,
     XCircle
 } from "lucide-react";
-import { getAllBookings } from "@/lib/api";
+import { getAllBookings } from "@/actions/admin";
+// import { getAllBookings } from "@/lib/api";
 // import { getAllBookings } from "@/src/lib/api";
 interface User {
     id: string;
