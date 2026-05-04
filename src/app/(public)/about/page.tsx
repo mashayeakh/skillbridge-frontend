@@ -105,7 +105,7 @@ export default function AboutPage() {
                             </Button>
                         </Link>
                         <Link href="/browse-tutor">
-                            <Button variant="outline" size="lg" className="rounded-2xl h-16 px-12 border-border/50 font-black uppercase tracking-widest text-xs hover:bg-primary/5">
+                            <Button variant="outline" size="lg" className="rounded-2xl h-16 px-12 border-border/50 font-black uppercase tracking-widest text-xs hover:bg-primary/5 hover:text-primary">
                                 Browse Tutors
                             </Button>
                         </Link>

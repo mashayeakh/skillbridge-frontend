@@ -106,7 +106,7 @@ const Hero = ({
                 </Button>
               )}
               {buttons.secondary && (
-                <Button asChild variant="outline" className="px-10 py-7 text-lg rounded-full border-2 border-border/50 hover:border-primary/30 hover:bg-primary/5 text-foreground transition-all duration-300 font-bold">
+                <Button asChild variant="outline" className="px-10 py-7 text-lg rounded-full border-2 border-border/50 hover:border-primary/30 hover:bg-primary/5 text-foreground hover:text-foreground transition-all duration-300 font-bold">
                   <Link href={buttons.secondary.url}>
                     {buttons.secondary.text}
                   </Link>

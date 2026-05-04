@@ -173,14 +173,14 @@ const Navbar = ({
         {/* ================= DESKTOP ================= */}
         <nav className="hidden lg:flex items-center justify-between gap-10">
           {/* Logo Section - Clean & Professional */}
-          <Link href={logo.url} className="flex items-center gap-3.5 group">
-            <div className="relative overflow-hidden p-2 bg-primary rounded-xl shadow-lg shadow-primary/20 transition-all duration-500 group-hover:scale-105 group-hover:-rotate-3">
+          <Link href={logo.url} className="flex items-center gap-3.5 group/logo">
+            <div className="relative overflow-hidden p-2 bg-secondary rounded-xl shadow-lg shadow-secondary/20 transition-all duration-500 group-hover/logo:scale-105 group-hover/logo:-rotate-3">
               <img
                 src={logo.src}
                 alt={logo.alt}
                 className="h-6 w-6 invert"
               />
-              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/logo:opacity-100 transition-opacity" />
             </div>
             <span className="text-2xl font-black tracking-tighter text-foreground">
               Skill<span className="text-primary">Bridge</span>
@@ -199,10 +199,10 @@ const Navbar = ({
                     <NavigationMenuLink asChild>
                       <Link
                         href={item.url}
-                        className="relative px-4 py-2 text-sm font-bold text-muted-foreground hover:text-primary transition-colors group"
+                        className="relative px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors group/navlink"
                       >
                         {item.title}
-                        <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                        <span className="absolute bottom-0 left-4 right-4 h-[1px] bg-secondary transform scale-x-0 group-hover/navlink:scale-x-100 transition-transform duration-300 origin-left" />
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
@@ -378,9 +378,9 @@ const Navbar = ({
                           <Link
                             key={item.title}
                             href={item.url}
-                            className="flex items-center justify-between p-4 rounded-xl hover:bg-primary/5 group transition-all"
+                            className="flex items-center justify-between p-4 rounded-xl hover:bg-primary/5 group/mobnav transition-all"
                           >
-                            <span className="font-bold text-foreground/80 group-hover:text-primary">{item.title}</span>
+                            <span className="font-bold text-foreground/80 group-hover/mobnav:text-secondary">{item.title}</span>
                             <ChevronDown className="h-4 w-4 -rotate-90 opacity-40" />
                           </Link>
                         );
