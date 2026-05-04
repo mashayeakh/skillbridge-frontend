@@ -2,24 +2,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Star, DollarSign } from "lucide-react";
+import { Star, DollarSign, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-interface Category {
-    id: string;
-    category: { id: string; name: string };
-}
-
-interface Tutor {
-    id: string;
-    name: string;
-    bio: string;
-    hourlyRate: number;
-    experienceYears?: number;
-    rating: number;
-    categories?: Category[];
-}
+import { Tutor } from "@/types/tutor";
 
 interface TutorCompactCardProps {
     tutor: Tutor;
@@ -34,77 +21,63 @@ export default function TutorCompactCard({ tutor }: TutorCompactCardProps) {
         .slice(0, 2);
 
     return (
-        <Card className="hover:shadow-md transition-shadow duration-200 border-border/50 mb-4">
-            <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                    {/* Avatar */}
-                    <Avatar className="size-12 border">
-                        <AvatarImage
-                            src={`https://i.pravatar.cc/150?u=${tutor.id}`}
-                            alt={tutor.name}
-                        />
-                        <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
-                            {initials}
-                        </AvatarFallback>
-                    </Avatar>
-
-                    {/* Info */}
+        <Card className="group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border-border/50 rounded-[2rem] overflow-hidden bg-card/50 backdrop-blur-sm hover:-translate-y-2">
+            <CardContent className="p-6">
+                <div className="flex items-center gap-4 mb-5">
+                    <div className="relative">
+                        <Avatar className="size-16 border-2 border-background shadow-md rounded-2xl">
+                            <AvatarImage
+                                src={`https://i.pravatar.cc/150?u=${tutor.id}`}
+                                alt={tutor.name}
+                                className="object-cover"
+                            />
+                            <AvatarFallback className="text-lg font-black bg-primary/10 text-primary">
+                                {initials}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-emerald-500 border-2 border-background rounded-full shadow-sm" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                            <h3 className="font-medium text-sm truncate">{tutor.name}</h3>
+                        <h3 className="font-black text-lg text-foreground truncate group-hover:text-primary transition-colors tracking-tight">
+                            {tutor.name}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-0 font-bold text-[10px] px-2 py-0.5 uppercase tracking-tighter">
+                                {tutor.experienceYears || 5}Y Exp
+                            </Badge>
                         </div>
-
-                        {/* Rating and Rate */}
-                        <div className="flex items-center gap-3 mt-1">
-                            <div className="flex items-center gap-1">
-                                <Star className="size-3.5 fill-yellow-400 text-yellow-400" />
-                                <span className="text-xs font-medium">{tutor?.rating.toFixed(1)}</span>
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                                <DollarSign className="size-3.5 text-green-500" />
-                                <span className="text-xs font-medium">${tutor.hourlyRate}/hr</span>
-                            </div>
-                        </div>
-
-                        {/* Bio */}
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                            {tutor.bio || "No description available"}
-                        </p>
                     </div>
                 </div>
 
-                {/* Tags/Subjects */}
-                {tutor.categories && tutor.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t">
-                        {tutor.categories.slice(0, 2).map((category, index) => (
-                            <Badge
-                                key={index}
-                                variant="secondary"
-                                className="text-xs px-2 py-0.5"
-                            >
-                                {category.category?.name}
-                            </Badge>
-                        ))}
-                        {tutor.categories.length > 2 && (
-                            <span className="text-xs text-muted-foreground">
-                                +{tutor.categories.length - 2} more
-                            </span>
-                        )}
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                    <div className="p-2.5 rounded-xl bg-muted/50 border border-border/30 flex items-center gap-2">
+                        <Star className="size-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-black">{tutor.rating?.toFixed(1) || "5.0"}</span>
                     </div>
-                )}
+                    <div className="p-2.5 rounded-xl bg-muted/50 border border-border/30 flex items-center gap-2">
+                        <DollarSign className="size-4 text-emerald-500" />
+                        <span className="text-sm font-black text-foreground">${tutor.hourlyRate}<span className="text-[10px] text-muted-foreground">/hr</span></span>
+                    </div>
+                </div>
+
+                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-1">
+                    {tutor.bio || "Passionate educator helping students achieve their academic goals through personalized learning."}
+                </p>
             </CardContent>
 
-            <CardFooter className="p-4 pt-0">
+            <CardFooter className="px-6 pb-6 pt-0">
                 <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs h-8"
+                    className="w-full h-11 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/10 transition-all group-hover:scale-[1.02]"
                     asChild
                 >
-                    <Link href={`/tutors/${tutor.id}`}>View Profile</Link>
+                    <Link href={`/tutors/${tutor.id}`} className="flex items-center justify-center gap-2">
+                        View Full Profile
+                        <ArrowRight className="size-4 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
+                    </Link>
                 </Button>
             </CardFooter>
         </Card>
     );
 }
+
+// import { ArrowRight, Star, DollarSign } from "lucide-react";

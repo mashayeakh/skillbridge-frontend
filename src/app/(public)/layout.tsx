@@ -25,17 +25,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // const hideNavbar = !!session?.user?.role;
 
     return (
-        <html lang="en" className="scroll-smooth">
-            <body
-                className={`${plusJakartaSans.variable} ${fraunces.variable} font-sans antialiased bg-cream text-charcoal`}
-            >
-                {/* {!hideNavbar && <Navbar />} */}
-                <Navbar />
-                {children}
-                {/* <Footer2 /> */}
-                <Toaster richColors position="top-center" />
-            </body>
-        </html>
+        <>
+            <Navbar />
+            {children}
+            <Toaster richColors position="top-center" />
+        </>
     );
 
 }

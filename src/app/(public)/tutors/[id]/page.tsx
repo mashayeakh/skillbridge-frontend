@@ -16,16 +16,15 @@ export default async function TutorIdPage({
     }
 
     try {
-        const res = await getTutorById(id);
-        const tutor = res?.data;
+        const tutor = await getTutorById(id);
 
         if (!tutor) {
             return (
-                <div className="min-h-screen flex items-center justify-center">
+                <div className="min-h-screen flex items-center justify-center bg-background">
                     <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Tutor Not Found</h2>
-                        <p className="text-gray-600 mb-4">The tutor you are looking for doesn't exist.</p>
-                        <a href="/browse-tutor" className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90">
+                        <h2 className="text-2xl font-black text-foreground mb-2">Tutor Not Found</h2>
+                        <p className="text-muted-foreground mb-6">The tutor you are looking for doesn't exist.</p>
+                        <a href="/browse-tutor" className="inline-block px-8 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all font-bold">
                             Browse Tutors
                         </a>
                     </div>
@@ -40,11 +39,11 @@ export default async function TutorIdPage({
     } catch (error) {
         console.error("Error loading tutor data:", error);
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-background">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Tutor</h2>
-                    <p className="text-gray-600 mb-4">Failed to load tutor information. Please try again.</p>
-                    <a href="/browse-tutor" className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90">
+                    <h2 className="text-2xl font-black text-foreground mb-2">Error Loading Tutor</h2>
+                    <p className="text-muted-foreground mb-6">Failed to load tutor information. Please try again.</p>
+                    <a href="/browse-tutor" className="inline-block px-8 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all font-bold">
                         Browse Tutors
                     </a>
                 </div>

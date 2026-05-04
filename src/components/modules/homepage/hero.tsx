@@ -47,58 +47,58 @@ const Hero = ({
   className,
 }: Hero1Props) => {
   return (
-    <section className={cn("py-16 md:py-24 lg:py-12 bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30", className)} >
+    <section className={cn("py-16 md:py-24 lg:py-12 bg-gradient-to-br from-background via-primary/5 to-secondary/5", className)} >
       <div className="container mx-auto px-4 lg:px-8">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <div className="flex flex-col gap-6 items-center text-center lg:items-start lg:text-left">
-            <Badge className="mb-2 px-4 py-2 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-200 text-blue-700 hover:bg-blue-500/20 transition-all">
+            <Badge className="mb-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20 text-primary hover:bg-primary/20 transition-all rounded-full font-bold">
               <GraduationCap className="mr-2 size-4" />
               Trusted Learning Platform
             </Badge>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight tracking-tight">
               {heading}
             </h1>
 
-            <p className="text-lg md:text-xl text-gray-600 max-w-xl leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
               {description}
             </p>
 
             {/* Stats Section */}
-            <div className="flex flex-wrap gap-6 my-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg">
-                  <Users className="size-5 text-white" />
+            <div className="flex flex-wrap gap-6 my-4 justify-center lg:justify-start">
+              <div className="flex items-center gap-3 group">
+                <div className="p-2.5 bg-primary/10 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                  <Users className="size-5" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Expert Tutors</p>
-                  <p className="text-lg font-bold text-gray-800">500+</p>
+                  <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Expert Tutors</p>
+                  <p className="text-lg font-bold text-foreground">500+</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg">
-                  <Calendar className="size-5 text-white" />
+              <div className="flex items-center gap-3 group">
+                <div className="p-2.5 bg-secondary/10 rounded-xl text-secondary group-hover:bg-secondary group-hover:text-white transition-all duration-300">
+                  <Calendar className="size-5" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Flexible Schedules</p>
-                  <p className="text-lg font-bold text-gray-800">24/7</p>
+                  <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Availability</p>
+                  <p className="text-lg font-bold text-foreground">24/7</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg">
-                  <Star className="size-5 text-white" />
+              <div className="flex items-center gap-3 group">
+                <div className="p-2.5 bg-accent/10 rounded-xl text-accent group-hover:bg-accent group-hover:text-white transition-all duration-300">
+                  <Star className="size-5" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Avg. Rating</p>
-                  <p className="text-lg font-bold text-gray-800">4.9</p>
+                  <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Avg. Rating</p>
+                  <p className="text-lg font-bold text-foreground">4.9/5</p>
                 </div>
               </div>
             </div>
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 w-full lg:justify-start justify-center mt-4">
+            <div className="flex flex-col sm:flex-row gap-4 w-full lg:justify-start justify-center mt-6">
               {buttons.primary && (
-                <Button asChild className="px-8 py-6 text-lg rounded-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 group">
+                <Button asChild className="px-10 py-7 text-lg rounded-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-lg hover:shadow-primary/25 transform transition-all duration-300 hover:scale-[1.02] group border-0 text-white font-bold">
                   <Link href={buttons.primary.url}>
                     {buttons.primary.text}
                     <ArrowRight className="ml-2 size-5 transform group-hover:translate-x-1 transition-transform" />
@@ -106,7 +106,7 @@ const Hero = ({
                 </Button>
               )}
               {buttons.secondary && (
-                <Button asChild variant="outline" className="px-8 py-6 text-lg rounded-full border-2 border-gray-300 hover:border-blue-300 hover:bg-blue-50 text-gray-700 transition-all duration-300">
+                <Button asChild variant="outline" className="px-10 py-7 text-lg rounded-full border-2 border-border/50 hover:border-primary/30 hover:bg-primary/5 text-foreground transition-all duration-300 font-bold">
                   <Link href={buttons.secondary.url}>
                     {buttons.secondary.text}
                   </Link>
@@ -116,19 +116,26 @@ const Hero = ({
           </div>
 
           <div className="flex items-center justify-center relative">
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-2xl"></div>
-            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-gradient-to-r from-pink-500/20 to-rose-500/20 rounded-full blur-2xl"></div>
+            {/* Background Orbs */}
+            <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-secondary/15 rounded-full blur-3xl animate-pulse delay-700"></div>
 
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl border-8 border-white">
+            <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-[12px] border-card bg-card transform rotate-2 hover:rotate-0 transition-transform duration-700">
               <img
                 src={image.src}
                 alt={image.alt}
-                className="w-full h-[400px] lg:h-[500px] object-cover"
+                className="w-full h-[400px] lg:h-[550px] object-cover scale-105 hover:scale-100 transition-transform duration-700"
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-                <div className="text-white">
-                  <p className="text-lg font-semibold">Live Interactive Session</p>
-                  <p className="text-sm opacity-90">Real-time learning with expert guidance</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-8 left-8 right-8 p-6 bg-card/40 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary rounded-xl shadow-lg shadow-primary/20">
+                    <GraduationCap className="size-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-foreground font-bold">Interactive Learning</p>
+                    <p className="text-sm text-muted-foreground">Real-time guidance with experts</p>
+                  </div>
                 </div>
               </div>
             </div>

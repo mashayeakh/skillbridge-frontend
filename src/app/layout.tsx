@@ -18,19 +18,23 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // const { data: session } = authClient.useSession();
-  // const hideNavbar = !!session?.user?.role;
+import { ThemeProvider } from "@/components/theme-provider";
 
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body
-        className={`${plusJakartaSans.variable} ${fraunces.variable} font-sans antialiased bg-cream text-charcoal`}
+        className={`${plusJakartaSans.variable} ${fraunces.variable} font-sans antialiased bg-background text-foreground`}
       >
-        {/* {!hideNavbar && <Navbar />} */}
-        {/* <Navbar /> */}
-        {children}
-        <Toaster richColors position="top-center" />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster richColors position="top-center" />
+        </ThemeProvider>
       </body>
     </html>
   );

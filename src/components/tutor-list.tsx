@@ -157,144 +157,77 @@ const TutorCard = ({
   image,
   rating = 4.9,
   subjects = [],
-  students = 200,
   experienceYears = 1,
   hourlyRate = 50,
-  badge,
 }: TutorCardProps) => {
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
   return (
-    <Card className="group relative overflow-hidden border-2 border-border/30 hover:border-primary/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      {/* Top Rated Badge */}
-      {badge && (
-        <div className="absolute top-3 left-3 z-10">
-          <Badge className={cn("gap-1 text-white border-0 shadow-sm", badge.color)}>
-            <Star className="w-3 h-3 fill-white" />
-            {badge.text}
-          </Badge>
-        </div>
-      )}
+    <Card className="group relative flex flex-col h-full bg-card hover:shadow-2xl transition-all duration-500 border-border/50 rounded-2xl overflow-hidden shadow-md hover:-translate-y-2">
+      {/* Header Section */}
+      <div className="relative h-44 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-accent/5" />
+        <Avatar className="absolute bottom-4 left-4 h-20 w-20 ring-4 ring-background shadow-xl">
+          <AvatarImage src={image.src} alt={name} className="object-cover" />
+          <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-xl font-bold">
+            {name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          </AvatarFallback>
+        </Avatar>
 
-      <CardContent className="p-6">
-        {/* Profile Section - Centered */}
-        <div className="flex flex-col items-center text-center mb-4">
-          <div className="relative mb-4">
-            <Avatar className="w-20 h-20 border-4 border-background shadow-lg">
-              <AvatarImage src={image.src} alt={image.alt} />
-              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/30 text-primary text-xl font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            {/* Verified Badge */}
-            <div className="absolute -bottom-1 -right-1 bg-background p-1 rounded-full border-2">
-              <CheckCircle className="w-5 h-5 text-green-500 fill-green-100" />
+        {/* Rating Badge */}
+        <div className="absolute top-4 left-4">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-accent rounded-full text-white shadow-lg">
+            <Star className="h-3.5 w-3.5 fill-white" />
+            <span className="text-xs font-black">{rating.toFixed(1)}</span>
+          </div>
+        </div>
+
+        {/* Price Badge */}
+        <div className="absolute top-4 right-4">
+          <div className="px-3 py-1.5 bg-background/80 backdrop-blur-md rounded-full border border-border/50 shadow-sm">
+            <span className="text-sm font-bold text-primary">${hourlyRate}</span>
+            <span className="text-[10px] text-muted-foreground ml-0.5">/hr</span>
+          </div>
+        </div>
+      </div>
+
+      <CardContent className="flex-1 flex flex-col pt-6 p-5">
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-2">
+            <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+              {name}
+            </CardTitle>
+            <div className="p-1.5 bg-primary/10 rounded-lg">
+              <CheckCircle className="h-3.5 w-3.5 text-primary" />
             </div>
           </div>
 
-          <CardTitle className="text-lg font-bold mb-1">{name}</CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
-            {role}
-          </CardDescription>
-        </div>
-
-        {/* Rating & Rate - Centered */}
-        <div className="flex items-center justify-center gap-4 mb-4 p-3 bg-muted/20 rounded-lg">
-          <div className="flex items-center gap-1">
-            <div className="flex">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={cn(
-                    "w-4 h-4",
-                    i < Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                  )}
-                />
-              ))}
-            </div>
-            <span className="font-bold text-sm ml-1">{rating.toFixed(1)}</span>
+          <div className="flex items-center gap-2 mb-3 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+            <Award className="h-3.5 w-3.5 text-secondary" />
+            <span>{experienceYears} Years Exp.</span>
           </div>
-          <div className="w-px h-6 bg-border/50" />
-          <div className="text-center">
-            <div className="text-xs text-muted-foreground">From</div>
-            <div className="font-bold text-lg">${hourlyRate}<span className="text-sm font-normal">/hr</span></div>
-          </div>
-        </div>
 
-        {/* Bio - Centered */}
-        <CardDescription className="text-sm text-muted-foreground mb-4 text-center line-clamp-2 min-h-[40px]">
-          {quote || "Experienced tutor dedicated to student success"}
-        </CardDescription>
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+            {quote || "Dedicated professional tutor focusing on measurable student results and long-term academic growth."}
+          </p>
 
-        {/* Subjects - Centered */}
-        <div className="mb-4">
-          <div className="flex items-center justify-center gap-1.5 mb-2">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold">Expertise</span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-1.5">
-            {subjects.slice(0, 3).map((subject, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="text-xs px-2.5 py-1 rounded-full"
-              >
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {subjects.slice(0, 2).map((subject, index) => (
+              <Badge key={index} variant="secondary" className="bg-secondary/10 text-secondary border-0 rounded-lg px-2 py-0.5 text-[9px] font-bold">
                 {subject}
               </Badge>
             ))}
-            {subjects.length > 3 && (
-              <Badge variant="outline" className="text-xs px-2.5 py-1 rounded-full">
-                +{subjects.length - 3}
+            {subjects.length > 2 && (
+              <Badge variant="outline" className="rounded-lg px-2 py-0.5 text-[9px] font-bold">
+                +{subjects.length - 2}
               </Badge>
             )}
           </div>
         </div>
 
-        {/* Stats Grid - Centered */}
-        <div className="grid grid-cols-3 gap-3 p-4 bg-gradient-to-br from-muted/10 to-muted/5 rounded-xl mb-6">
-          <div className="text-center">
-            <div className="flex justify-center mb-1">
-              <div className="p-1.5 rounded-full bg-primary/10">
-                <Users className="w-3.5 h-3.5 text-primary" />
-              </div>
-            </div>
-            <div className="text-[10px] text-muted-foreground">Students</div>
-            <div className="text-sm font-bold">{students}</div>
-          </div>
-
-          <div className="text-center">
-            <div className="flex justify-center mb-1">
-              <div className="p-1.5 rounded-full bg-primary/10">
-                <Award className="w-3.5 h-3.5 text-primary" />
-              </div>
-            </div>
-            <div className="text-[10px] text-muted-foreground">Experience</div>
-            <div className="text-sm font-bold">{experienceYears}y</div>
-          </div>
-
-          <div className="text-center">
-            <div className="flex justify-center mb-1">
-              <div className="p-1.5 rounded-full bg-primary/10">
-                <Clock className="w-3.5 h-3.5 text-primary" />
-              </div>
-            </div>
-            <div className="text-[10px] text-muted-foreground">Sessions</div>
-            <div className="text-sm font-bold">100+</div>
-          </div>
-        </div>
-
-        {/* View Profile Button - Centered */}
-        <Link href={`/tutors/${id}`} className="block w-full">
+        <Link href={`/tutors/${id}`} className="block w-full mt-auto">
           <Button
-            className="w-full font-medium h-10 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
-            variant="outline"
+            className="w-full rounded-xl h-10 bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white font-bold shadow-md hover:shadow-lg active:scale-95 transition-all text-xs"
           >
-            View Full Profile
+            View Details
           </Button>
         </Link>
       </CardContent>

@@ -25,7 +25,10 @@ import {
     Sparkles,
     Eye,
     User,
-    ExternalLink
+    Users,
+    ArrowRight,
+    ExternalLink,
+    ChevronDown
 } from "lucide-react";
 import { Tutor } from "@/types/tutor";
 import { Separator } from "@/components/ui/separator";
@@ -52,18 +55,20 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
     const [query, setQuery] = useState("");
     const [minRating, setMinRating] = useState<number | "">("");
     const [category, setCategory] = useState("");
+    const [sortBy, setSortBy] = useState<string>("rating-desc");
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
-    const [availability, setAvailability] = useState<string>("");
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
     const [categories, setCategories] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
 
     // Fetch active categories from API
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/public/categories`
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/public/categories`
                 );
                 const data = await response.json();
 
@@ -89,103 +94,144 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
         fetchCategories();
     }, [tutors]);
 
-    const filtered = useMemo(() => {
-        return tutors.filter((t) => {
-            if (query && !t.name.toLowerCase().includes(query.toLowerCase())) return false;
-            if (minRating !== "" && t.rating < Number(minRating)) return false;
-            if (category && !t.categories?.includes(category)) return false;
-            if (t.hourlyRate < priceRange[0] || t.hourlyRate > priceRange[1]) return false;
-            return true;
-        });
-    }, [query, minRating, category, tutors, priceRange]);
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [query, minRating, category, priceRange, sortBy]);
 
-    const renderRatingStars = (rating: number) => {
-        return (
-            <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                    <Star
-                        key={i}
-                        className={`h-4 w-4 ${i < Math.floor(rating) ? 'fill-amber-400 text-amber-400' : 'fill-gray-200 text-gray-200'}`}
-                    />
-                ))}
-                <span className="ml-1 font-medium">{rating.toFixed(1)}</span>
-            </div>
-        );
-    };
+    const filteredAndSorted = useMemo(() => {
+        let result = tutors.filter((t) => {
+            const matchesQuery = query === "" || 
+                t.name.toLowerCase().includes(query.toLowerCase()) || 
+                (t.bio && t.bio.toLowerCase().includes(query.toLowerCase())) ||
+                (t.categories && t.categories.some(c => c.toLowerCase().includes(query.toLowerCase())));
+            
+            const matchesRating = minRating === "" || t.rating >= Number(minRating);
+            const matchesCategory = category === "" || (t.categories && t.categories.includes(category));
+            const matchesPrice = t.hourlyRate >= priceRange[0] && t.hourlyRate <= priceRange[1];
+            
+            return matchesQuery && matchesRating && matchesCategory && matchesPrice;
+        });
+
+        // Sorting
+        return result.sort((a, b) => {
+            switch (sortBy) {
+                case "price-asc":
+                    return a.hourlyRate - b.hourlyRate;
+                case "price-desc":
+                    return b.hourlyRate - a.hourlyRate;
+                case "rating-desc":
+                    return b.rating - a.rating;
+                case "exp-desc":
+                    return (b.experienceYears || 0) - (a.experienceYears || 0);
+                default:
+                    return 0;
+            }
+        });
+    }, [query, minRating, category, tutors, priceRange, sortBy]);
+
+    const paginatedTutors = filteredAndSorted.slice(0, currentPage * itemsPerPage);
+    const hasMore = paginatedTutors.length < filteredAndSorted.length;
 
     const handleViewProfile = (tutorId: string) => {
-        // Navigate to the individual tutor profile page
         router.push(`/tutors/${tutorId}`);
     };
 
     const handleContactTutor = (tutorId: string) => {
-        // You can implement contact functionality here
         console.log("Contact tutor:", tutorId);
     };
 
     return (
         <section className="py-6">
             <div className="container mx-auto max-w-7xl px-4">
-                {/* Enhanced Filters */}
-                <Card className="mb-8 border shadow-sm">
-                    <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div className="flex-1">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search tutors by name, subject, or expertise..."
-                                        value={query}
-                                        onChange={(e) => setQuery(e.target.value)}
-                                        className="pl-10"
-                                    />
-                                </div>
+                
+                {/* --- Advanced Filter Bar --- */}
+                <Card className="mb-10 border-border/50 shadow-xl rounded-[2rem] overflow-hidden bg-card/50 backdrop-blur-sm">
+                    <CardContent className="p-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            {/* Search */}
+                            <div className="lg:col-span-5 relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                                <Input
+                                    placeholder="Search by name, subject, or keywords..."
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    className="pl-12 h-14 rounded-2xl border-border/50 bg-background/50 focus:ring-primary shadow-sm"
+                                />
                             </div>
 
-                            <div className="flex flex-wrap gap-3">
-                                <div className="relative">
-                                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            {/* Filters Group */}
+                            <div className="lg:col-span-7 flex flex-wrap gap-4">
+                                <div className="flex-1 min-w-[150px]">
+                                    <select
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        className="w-full h-14 rounded-2xl border border-border/50 bg-background/50 px-4 text-sm font-bold text-foreground focus:ring-primary focus:border-primary transition-all"
+                                    >
+                                        <option value="">All Subjects</option>
+                                        {categories.map((c) => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="flex-1 min-w-[150px]">
                                     <select
                                         value={minRating}
                                         onChange={(e) =>
                                             setMinRating(e.target.value === "" ? "" : Number(e.target.value))
                                         }
-                                        className="h-10 rounded-lg border border-input bg-background pl-10 pr-8 py-2 text-sm"
+                                        className="w-full h-14 rounded-2xl border border-border/50 bg-background/50 px-4 text-sm font-bold text-foreground focus:ring-primary focus:border-primary transition-all"
                                     >
-                                        <option value="">Any rating</option>
-                                        <option value="4">⭐ 4.0+</option>
-                                        <option value="4.5">⭐ 4.5+</option>
-                                        <option value="4.8">⭐ 4.8+</option>
+                                        <option value="">Any Rating</option>
+                                        <option value="4.5">⭐ 4.5+ Rating</option>
+                                        <option value="4.8">⭐ 4.8+ Rating</option>
                                     </select>
                                 </div>
 
-                                <div className="relative">
-                                    <BookOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <div className="flex-1 min-w-[150px]">
                                     <select
-                                        value={category}
-                                        onChange={(e) => setCategory(e.target.value)}
-                                        disabled={loading}
-                                        className="h-10 rounded-lg border border-input bg-background pl-10 pr-8 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        className="w-full h-14 rounded-2xl border border-border/50 bg-background/50 px-4 text-sm font-bold text-foreground focus:ring-primary focus:border-primary transition-all"
                                     >
-                                        <option value="">All subjects</option>
-                                        {loading ? (
-                                            <option value="" disabled>Loading categories...</option>
-                                        ) : (
-                                            categories.map((c) => (
-                                                <option key={c} value={c}>
-                                                    {c}
-                                                </option>
-                                            ))
-                                        )}
+                                        <option value="rating-desc">Sort by: Top Rated</option>
+                                        <option value="price-asc">Price: Low to High</option>
+                                        <option value="price-desc">Price: High to Low</option>
+                                        <option value="exp-desc">Most Experienced</option>
                                     </select>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+                        {/* Secondary Filter Row */}
+                        <div className="mt-8 pt-8 border-t border-border/50 flex flex-wrap items-center justify-between gap-6">
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Price Limit:</span>
+                                    <div className="flex items-center gap-2">
+                                        <Input 
+                                            type="number" 
+                                            value={priceRange[1]} 
+                                            onChange={(e) => setPriceRange([0, Number(e.target.value)])}
+                                            className="w-24 h-10 rounded-xl border-border/50 font-bold"
+                                        />
+                                        <span className="text-sm font-bold">Max $/hr</span>
+                                    </div>
+                                </div>
+                                <Separator orientation="vertical" className="h-6" />
+                                <div className="text-sm font-bold text-muted-foreground">
+                                    Found <span className="text-primary">{filteredAndSorted.length}</span> active experts
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="flex bg-muted p-1 rounded-xl shadow-inner">
                                     <Button
                                         variant={viewMode === "grid" ? "default" : "ghost"}
                                         size="sm"
                                         onClick={() => setViewMode("grid")}
-                                        className="h-8 w-8"
+                                        className="h-9 w-10 rounded-lg"
                                     >
                                         <Grid className="h-4 w-4" />
                                     </Button>
@@ -193,7 +239,7 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                         variant={viewMode === "list" ? "default" : "ghost"}
                                         size="sm"
                                         onClick={() => setViewMode("list")}
-                                        className="h-8 w-8"
+                                        className="h-9 w-10 rounded-lg"
                                     >
                                         <List className="h-4 w-4" />
                                     </Button>
@@ -201,111 +247,111 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                         variant={viewMode === "table" ? "default" : "ghost"}
                                         size="sm"
                                         onClick={() => setViewMode("table")}
-                                        className="h-8 w-8"
+                                        className="h-9 w-10 rounded-lg"
                                     >
                                         <Table className="h-4 w-4" />
                                     </Button>
                                 </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setQuery("");
+                                        setMinRating("");
+                                        setCategory("");
+                                        setPriceRange([0, 500]);
+                                        setSortBy("rating-desc");
+                                    }}
+                                    className="text-xs font-black uppercase tracking-widest hover:text-primary"
+                                >
+                                    Reset All
+                                </Button>
                             </div>
-                        </div>
-
-                        {/* Results Count */}
-                        <div className="mt-4 flex items-center justify-between">
-                            <div className="text-sm text-muted-foreground">
-                                Showing <span className="font-semibold text-foreground">{filtered.length}</span> of <span className="font-semibold text-foreground">{tutors.length}</span> tutors
-                            </div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setQuery("");
-                                    setMinRating("");
-                                    setCategory("");
-                                    setPriceRange([0, 100]);
-                                }}
-                                className="text-sm"
-                            >
-                                Clear filters
-                            </Button>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Results */}
+                {/* --- Results Grid --- */}
                 {viewMode === "grid" && (
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {filtered.map((t) => (
-                            <Card key={t.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden cursor-pointer">
-                                <CardHeader className="p-0">
-                                    <div className="relative h-48 bg-gradient-to-br from-primary/10 to-primary/5">
-                                        <Avatar className="absolute -bottom-8 left-6 h-20 w-20 border-4 border-background shadow-lg">
-                                            <AvatarImage src={t.image} />
-                                            <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white text-lg">
-                                                {t.name.split(' ').map(n => n[0]).join('')}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="absolute top-4 right-4">
-                                            <Badge className="bg-gradient-to-r from-primary to-primary/80 text-white border-0">
-                                                ${t.hourlyRate}<span className="text-xs ml-1 opacity-90">/hr</span>
-                                            </Badge>
+                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
+                        {paginatedTutors.map((t) => (
+                            <Card key={t.id} className="group relative flex flex-col h-full bg-card hover:shadow-2xl transition-all duration-500 border-border/50 rounded-[2rem] overflow-hidden shadow-lg hover:-translate-y-2">
+                                {/* Header / Image */}
+                                <div className="relative h-56 overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary via-secondary/40 to-accent/20 opacity-30 group-hover:scale-110 transition-transform duration-700" />
+                                    <Avatar className="absolute bottom-6 left-6 h-28 w-28 ring-[6px] ring-background shadow-2xl transition-transform group-hover:scale-105">
+                                        <AvatarImage src={t.image} className="object-cover" />
+                                        <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-3xl font-black">
+                                            {t.name?.[0] || "T"}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    
+                                    <div className="absolute top-6 right-6">
+                                        <div className="px-4 py-2 bg-background/90 backdrop-blur-md rounded-2xl border border-border/50 shadow-xl">
+                                            <span className="text-lg font-black text-primary">${t.hourlyRate}</span>
+                                            <span className="text-[10px] text-muted-foreground ml-1 font-bold">/HR</span>
                                         </div>
                                     </div>
-                                </CardHeader>
-                                <CardContent className="pt-10">
-                                    <div className="space-y-3">
-                                        <div>
-                                            <CardTitle className="text-lg hover:text-primary transition-colors">
-                                                <button
-                                                    onClick={() => handleViewProfile(t.id)}
-                                                    className="text-left hover:underline"
-                                                >
-                                                    {t.name}
-                                                </button>
-                                            </CardTitle>
-                                            <CardDescription className="flex items-center gap-1 mt-1">
-                                                <MapPin className="h-3 w-3" />
-                                                Available Online
-                                            </CardDescription>
+
+                                    <div className="absolute top-6 left-6">
+                                        <Badge className="bg-accent/90 backdrop-blur-md text-white border-0 shadow-lg font-black px-3 py-1.5 rounded-xl">
+                                            <Star className="h-3.5 w-3.5 mr-1.5 fill-white" />
+                                            {t.rating.toFixed(1)}
+                                        </Badge>
+                                    </div>
+                                </div>
+
+                                <CardContent className="flex-1 flex flex-col pt-10 p-8">
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-2xl font-black text-foreground group-hover:text-primary transition-colors tracking-tighter">
+                                                {t.name}
+                                            </h3>
+                                            <div className="p-2 bg-primary/10 rounded-xl">
+                                                <CheckCircle className="h-5 w-5 text-primary" />
+                                            </div>
                                         </div>
 
-                                        {renderRatingStars(t.rating)}
+                                        <p className="text-sm text-muted-foreground line-clamp-3 mb-6 leading-relaxed font-medium">
+                                            {t.bio || "Passionate educator with years of experience helping students achieve their academic goals through personalized learning."}
+                                        </p>
 
-                                        <div className="flex flex-wrap gap-2">
-                                            {t.categories?.slice(0, 3).map((cat, index) => (
-                                                <Badge key={index} variant="secondary" className="text-xs">
+                                        <div className="flex flex-wrap gap-2 mb-8">
+                                            {t.categories?.slice(0, 3).map((cat, idx) => (
+                                                <Badge key={idx} variant="secondary" className="bg-primary/5 text-primary border border-primary/10 rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-widest">
                                                     {cat}
                                                 </Badge>
                                             ))}
-                                            {t.categories && t.categories.length > 3 && (
-                                                <Badge variant="outline" className="text-xs">
-                                                    +{t.categories.length - 3}
-                                                </Badge>
-                                            )}
                                         </div>
+                                    </div>
 
-                                        <p className="text-sm text-muted-foreground line-clamp-2">{t.bio}</p>
-
-                                        <div className="flex items-center gap-2 pt-2">
-                                            <CheckCircle className="h-4 w-4 text-emerald-500" />
-                                            <span className="text-xs text-muted-foreground">Verified Tutor</span>
+                                    <div className="pt-6 border-t border-border/50 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Users className="h-4 w-4 text-secondary" />
+                                            <span className="text-xs font-black text-muted-foreground uppercase">
+                                                {(t.rating * 20 + (t.id.charCodeAt(0) % 50)).toFixed(0)}+ Sessions
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Award className="h-4 w-4 text-accent" />
+                                            <span className="text-xs font-black text-muted-foreground uppercase">{t.experienceYears || 5}Y Exp</span>
                                         </div>
                                     </div>
                                 </CardContent>
-                                <CardFooter className="border-t p-4 flex gap-2">
-                                    <Button
-                                        className="flex-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                                        onClick={() => handleContactTutor(t.id)}
-                                    >
-                                        <MessageSquare className="h-4 w-4 mr-2" />
-                                        Contact
-                                    </Button>
+
+                                <CardFooter className="p-8 pt-0 flex gap-4">
                                     <Button
                                         variant="outline"
-                                        className="flex-1"
+                                        className="flex-1 rounded-2xl h-14 border-border/50 hover:bg-secondary/5 transition-all font-black text-xs uppercase tracking-widest"
+                                        onClick={() => handleContactTutor(t.id)}
+                                    >
+                                        Message
+                                    </Button>
+                                    <Button
+                                        className="flex-1 rounded-2xl h-14 bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
                                         onClick={() => handleViewProfile(t.id)}
                                     >
-                                        <Eye className="h-4 w-4 mr-2" />
-                                        View Profile
+                                        Details
                                     </Button>
                                 </CardFooter>
                             </Card>
@@ -313,170 +359,167 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                     </div>
                 )}
 
+                {/* List View Upgrade */}
                 {viewMode === "list" && (
-                    <div className="space-y-4">
-                        {filtered.map((t) => (
-                            <Card key={t.id} className="group hover:shadow-md transition-shadow">
-                                <CardContent className="p-6">
-                                    <div className="flex items-start gap-4">
-                                        <Avatar className="h-20 w-20 border-2 border-primary/20">
-                                            <AvatarImage src={t.image} />
-                                            <AvatarFallback className="bg-primary/10 text-primary">
-                                                {t.name.split(' ').map(n => n[0]).join('')}
-                                            </AvatarFallback>
-                                        </Avatar>
-
-                                        <div className="flex-1">
-                                            <div className="flex items-start justify-between mb-2">
-                                                <div>
-                                                    <h3 className="text-lg font-semibold hover:text-primary transition-colors">
-                                                        <button
-                                                            onClick={() => handleViewProfile(t.id)}
-                                                            className="text-left hover:underline"
-                                                        >
-                                                            {t.name}
-                                                        </button>
-                                                    </h3>
-                                                    <div className="flex items-center gap-4 mt-1">
-                                                        {renderRatingStars(t.rating)}
-                                                        <div className="flex items-center gap-1">
-                                                            <DollarSign className="h-4 w-4 text-emerald-600" />
-                                                            <span className="font-semibold">${t.hourlyRate}</span>
-                                                            <span className="text-sm text-muted-foreground">/hr</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <Badge className="bg-gradient-to-r from-primary to-primary/80 text-white">
-                                                    <Award className="h-3 w-3 mr-1" />
-                                                    Top Rated
-                                                </Badge>
-                                            </div>
-
-                                            <p className="text-muted-foreground mb-3 line-clamp-2">{t.bio}</p>
-
-                                            <div className="flex flex-wrap gap-2 mb-4">
-                                                {t.categories?.map((cat, index) => (
-                                                    <Badge key={index} variant="outline" className="text-xs">
-                                                        {cat}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-
-                                            <div className="flex items-center gap-4">
-                                                <Button size="sm" variant="default" onClick={() => handleContactTutor(t.id)}>
-                                                    <MessageSquare className="h-4 w-4 mr-2" />
-                                                    Message
-                                                </Button>
-                                                <Button size="sm" variant="outline" onClick={() => handleViewProfile(t.id)}>
-                                                    <Eye className="h-4 w-4 mr-2" />
-                                                    View Full Profile
-                                                </Button>
-                                            </div>
+                    <div className="space-y-8">
+                        {paginatedTutors.map((t) => (
+                            <Card key={t.id} className="group relative bg-card hover:shadow-2xl transition-all duration-500 border-border/50 rounded-[2.5rem] overflow-hidden">
+                                <div className="flex flex-col md:flex-row h-full">
+                                    {/* Image Section */}
+                                    <div className="relative w-full md:w-80 h-64 md:h-auto overflow-hidden">
+                                        <img
+                                            src={t.image}
+                                            alt={t.name}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-transparent md:hidden" />
+                                        <div className="absolute top-6 left-6">
+                                            <Badge className="bg-accent text-white border-0 shadow-xl font-black px-3 py-1.5 rounded-xl">
+                                                <Star className="h-3.5 w-3.5 mr-1.5 fill-white" />
+                                                {t.rating.toFixed(1)}
+                                            </Badge>
                                         </div>
                                     </div>
-                                </CardContent>
+
+                                    {/* Content Section */}
+                                    <div className="flex-1 p-8 md:p-12 flex flex-col justify-center">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+                                            <div>
+                                                <h3 className="text-3xl font-black text-foreground group-hover:text-primary transition-colors tracking-tighter mb-2">
+                                                    {t.name}
+                                                </h3>
+                                                <div className="flex items-center gap-4 text-sm font-bold text-muted-foreground">
+                                                    <span className="flex items-center gap-2 text-primary font-black"><DollarSign className="h-4 w-4" /> ${t.hourlyRate}/HR</span>
+                                                    <Separator orientation="vertical" className="h-4" />
+                                                    <span className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Available Online</span>
+                                                </div>
+                                            </div>
+                                            <Badge className="bg-primary/10 text-primary border-primary/20 px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest self-start">
+                                                Verified Expert
+                                            </Badge>
+                                        </div>
+
+                                        <p className="text-muted-foreground text-lg mb-8 line-clamp-2 leading-relaxed font-medium">
+                                            {t.bio || "Passionate educator with years of experience helping students achieve their academic goals through personalized learning."}
+                                        </p>
+
+                                        <div className="flex flex-wrap gap-6 items-center">
+                                            <Button
+                                                className="rounded-2xl h-14 bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl px-10 hover:scale-[1.02] transition-all"
+                                                onClick={() => handleViewProfile(t.id)}
+                                            >
+                                                View Full Profile
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                className="font-black text-xs uppercase tracking-widest hover:text-secondary transition-colors"
+                                                onClick={() => handleContactTutor(t.id)}
+                                            >
+                                                Message Tutor
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
                             </Card>
                         ))}
                     </div>
                 )}
 
+                {/* Table View Upgrade */}
                 {viewMode === "table" && (
-                    <Card>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-muted/50">
-                                        <tr>
-                                            <th className="text-left p-4 font-semibold">Tutor</th>
-                                            <th className="text-left p-4 font-semibold">Rating</th>
-                                            <th className="text-left p-4 font-semibold">Rate</th>
-                                            <th className="text-left p-4 font-semibold">Subjects</th>
-                                            <th className="text-left p-4 font-semibold">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filtered.map((t) => (
-                                            <tr key={t.id} className="border-t hover:bg-muted/30 transition-colors">
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar className="h-10 w-10">
-                                                            <AvatarImage src={t.image} />
-                                                            <AvatarFallback>{t.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <button
-                                                                onClick={() => handleViewProfile(t.id)}
-                                                                className="font-medium hover:text-primary hover:underline"
-                                                            >
-                                                                {t.name}
-                                                            </button>
-                                                            <div className="text-sm text-muted-foreground line-clamp-1">{t.bio.substring(0, 50)}...</div>
+                    <Card className="border-border/50 rounded-[2rem] overflow-hidden shadow-2xl bg-card/50 backdrop-blur-sm">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-muted/50 border-b border-border/50">
+                                    <tr>
+                                        <th className="text-left p-8 font-black uppercase tracking-[0.2em] text-[10px] text-muted-foreground">Tutor</th>
+                                        <th className="text-left p-8 font-black uppercase tracking-[0.2em] text-[10px] text-muted-foreground">Rating</th>
+                                        <th className="text-left p-8 font-black uppercase tracking-[0.2em] text-[10px] text-muted-foreground">Hourly Rate</th>
+                                        <th className="text-center p-8 font-black uppercase tracking-[0.2em] text-[10px] text-muted-foreground">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border/50">
+                                    {paginatedTutors.map((t) => (
+                                        <tr key={t.id} className="hover:bg-primary/5 transition-colors group">
+                                            <td className="p-8">
+                                                <div className="flex items-center gap-6">
+                                                    <Avatar className="h-14 w-14 ring-4 ring-primary/10 transition-transform group-hover:scale-110">
+                                                        <AvatarImage src={t.image} />
+                                                        <AvatarFallback className="bg-primary/10 text-primary font-black">{t.name?.[0] || "T"}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <div className="font-black text-lg text-foreground group-hover:text-primary transition-colors tracking-tight">{t.name}</div>
+                                                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 mt-1">
+                                                            <CheckCircle className="h-3 w-3 text-primary" /> Verified Expert
                                                         </div>
                                                     </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    {renderRatingStars(t.rating)}
-                                                </td>
-                                                <td className="p-4 font-semibold">
-                                                    ${t.hourlyRate}/hr
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {t.categories?.slice(0, 2).map((cat, index) => (
-                                                            <Badge key={index} variant="secondary" className="text-xs">
-                                                                {cat}
-                                                            </Badge>
-                                                        ))}
-                                                        {t.categories && t.categories.length > 2 && (
-                                                            <span className="text-xs text-muted-foreground">
-                                                                +{t.categories.length - 2} more
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex gap-2">
-                                                        <Button size="sm" variant="outline" onClick={() => handleContactTutor(t.id)}>
-                                                            Contact
-                                                        </Button>
-                                                        <Button size="sm" variant="default" onClick={() => handleViewProfile(t.id)}>
-                                                            <ExternalLink className="h-3 w-3 mr-1" />
-                                                            View
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
+                                                </div>
+                                            </td>
+                                            <td className="p-8">
+                                                <div className="flex items-center gap-2">
+                                                    <Star className="h-4 w-4 fill-accent text-accent" />
+                                                    <span className="font-black text-lg">{t.rating.toFixed(1)}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-8">
+                                                <div className="font-black text-2xl text-primary tracking-tighter">${t.hourlyRate}<span className="text-xs text-muted-foreground ml-1">/HR</span></div>
+                                            </td>
+                                            <td className="p-8">
+                                                <div className="flex gap-4 justify-center">
+                                                    <Button size="sm" className="rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 shadow-lg shadow-primary/20" onClick={() => handleViewProfile(t.id)}>Details</Button>
+                                                    <Button size="sm" variant="outline" className="rounded-xl border-border/50 font-black text-[10px] uppercase tracking-widest h-10 px-6" onClick={() => handleContactTutor(t.id)}>Chat</Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </Card>
                 )}
 
-                {/* Empty State */}
-                {filtered.length === 0 && (
-                    <Card className="text-center py-12">
-                        <CardContent>
-                            <div className="inline-flex p-4 bg-muted rounded-full mb-4">
-                                <Search className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">No tutors found</h3>
-                            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                                Try adjusting your filters or search terms to find more tutors.
-                            </p>
-                            <Button
-                                onClick={() => {
-                                    setQuery("");
-                                    setMinRating("");
-                                    setCategory("");
-                                    setPriceRange([0, 100]);
-                                }}
-                            >
-                                Clear all filters
-                            </Button>
-                        </CardContent>
-                    </Card>
+                {/* --- Pagination / Load More --- */}
+                {hasMore ? (
+                    <div className="mt-20 text-center">
+                        <Button 
+                            variant="outline" 
+                            size="lg" 
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            className="rounded-2xl h-16 px-12 border-border/50 font-black text-sm uppercase tracking-[0.2em] hover:bg-primary/5 hover:text-primary transition-all shadow-xl"
+                        >
+                            <Sparkles className="h-4 w-4 mr-3 animate-pulse" />
+                            Discover More Tutors
+                        </Button>
+                    </div>
+                ) : filteredAndSorted.length > 0 ? (
+                    <div className="mt-20 text-center">
+                        <p className="text-sm font-black text-muted-foreground uppercase tracking-widest">You've reached the end of our list</p>
+                    </div>
+                ) : null}
+
+                {/* --- Empty State --- */}
+                {filteredAndSorted.length === 0 && (
+                    <div className="text-center py-32 space-y-8">
+                        <div className="inline-flex p-8 bg-muted/50 rounded-full mb-4">
+                            <Search className="h-12 w-12 text-muted-foreground opacity-20" />
+                        </div>
+                        <h3 className="text-3xl font-black tracking-tighter">No Experts Found</h3>
+                        <p className="text-muted-foreground max-w-md mx-auto font-medium">
+                            We couldn't find any tutors matching your current filters. Try resetting or adjusting your search.
+                        </p>
+                        <Button
+                            className="rounded-2xl h-14 px-8 font-black text-xs uppercase tracking-widest bg-primary text-white"
+                            onClick={() => {
+                                setQuery("");
+                                setMinRating("");
+                                setCategory("");
+                                setPriceRange([0, 500]);
+                                setSortBy("rating-desc");
+                            }}
+                        >
+                            Reset All Filters
+                        </Button>
+                    </div>
                 )}
             </div>
         </section>

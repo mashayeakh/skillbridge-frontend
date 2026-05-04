@@ -26,40 +26,39 @@ const Footer2 = ({
   copyright = "© 2024 SkillBridge. All rights reserved.",
 }: Footer2Props) => {
   return (
-    <footer className={cn("bg-gradient-to-b from-gray-900 to-gray-950 text-white", className)}>
-      <div className="container mx-auto px-4 py-12">
-        {/* Top Section - Brand & Links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+    <footer className={cn("bg-card text-card-foreground border-t border-border/50", className)}>
+      <div className="container mx-auto px-4 py-12">        {/* Top Section - Brand & Links */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand Column */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <Link href={logo.url} className="flex items-center gap-3 group">
-              <div className="p-2.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
+              <div className="p-2.5 bg-gradient-to-br from-primary via-secondary to-accent rounded-xl shadow-lg">
                 <img
                   src={logo.src}
                   className="h-7 invert"
                   alt={logo.alt}
                 />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                 {logo.title}
               </span>
             </Link>
-            <p className="text-gray-300 text-sm leading-relaxed max-w-xs">
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
               {tagline}
             </p>
 
             {/* Social Links */}
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-4 pt-2">
               <a
                 href="#"
-                className="p-2 rounded-lg bg-gray-800 hover:bg-blue-500/20 hover:text-blue-400 transition-all duration-300"
+                className="p-2.5 rounded-lg bg-secondary/10 text-secondary hover:bg-secondary hover:text-white transition-all duration-300 shadow-sm"
                 aria-label="Facebook"
               >
                 <Facebook className="h-4 w-4" />
               </a>
               <a
                 href="#"
-                className="p-2 rounded-lg bg-gray-800 hover:bg-pink-500/20 hover:text-pink-400 transition-all duration-300"
+                className="p-2.5 rounded-lg bg-accent/10 text-accent hover:bg-accent hover:text-white transition-all duration-300 shadow-sm"
                 aria-label="Instagram"
               >
                 <Instagram className="h-4 w-4" />
@@ -68,35 +67,53 @@ const Footer2 = ({
           </div>
 
           {/* Quick Links */}
-
-
-          {/* Contact Info */}
           <div>
-            <h3 className="text-base font-semibold mb-4 text-gray-200">Contact</h3>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2 text-sm text-gray-400">
-                <Mail className="h-4 w-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                <span>support@skillbridge.com</span>
-              </div>
-              <div className="flex items-start gap-2 text-sm text-gray-400">
-                <Phone className="h-4 w-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                <span>+1 (555) 123-4567</span>
-              </div>
-            </div>
+            <h3 className="text-base font-bold mb-6 text-foreground">Explore</h3>
+            <ul className="space-y-4">
+              <li>
+                <Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">About SkillBridge</Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-sm text-muted-foreground hover:text-primary transition-colors">Latest News & Blog</Link>
+              </li>
+              <li>
+                <Link href="/browse-tutor" className="text-sm text-muted-foreground hover:text-primary transition-colors">Browse Tutors</Link>
+              </li>
+              <li>
+                <Link href="/become-tutor" className="text-sm text-muted-foreground hover:text-primary transition-colors">Become a Tutor</Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div>
+            <h3 className="text-base font-bold mb-6 text-foreground">Support</h3>
+            <ul className="space-y-4">
+              <li>
+                <Link href="/help" className="text-sm text-muted-foreground hover:text-primary transition-colors">Help Center / FAQ</Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">Contact Support</Link>
+              </li>
+              <li className="flex items-start gap-3 text-sm text-muted-foreground group">
+                <Mail className="h-4 w-4 mt-0.5 text-primary" />
+                <span className="text-xs">support@skillbridge.io</span>
+              </li>
+            </ul>
           </div>
 
           {/* Simple Newsletter */}
           <div>
-            <h3 className="text-base font-semibold mb-4 text-gray-200">Stay Updated</h3>
-            <div className="space-y-3">
-              <p className="text-sm text-gray-400">Get learning tips and updates</p>
+            <h3 className="text-base font-bold mb-6 text-foreground">Newsletter</h3>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Subscribe for the latest updates.</p>
               <div className="flex gap-2">
                 <input
                   type="email"
-                  placeholder="Your email"
-                  className="flex-1 px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 text-white"
+                  placeholder="Email"
+                  className="w-full px-4 py-2 text-sm bg-background border border-border/50 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-foreground transition-all"
                 />
-                <button className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-lg transition-all duration-300">
+                <button className="px-4 py-2 text-sm font-bold bg-primary text-white rounded-xl hover:opacity-90 transition-all shadow-md">
                   Join
                 </button>
               </div>
@@ -104,31 +121,32 @@ const Footer2 = ({
           </div>
         </div>
 
+
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-gray-800">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="pt-8 border-t border-border/30">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             {/* Copyright */}
-            <p className="text-sm text-gray-400 text-center md:text-left">
+            <p className="text-sm text-muted-foreground text-center md:text-left font-medium">
               {copyright}
             </p>
 
             {/* Legal Links */}
-            <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
+            <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
               <Link
                 href="/privacy"
-                className="hover:text-blue-400 transition-colors duration-300"
+                className="hover:text-primary transition-colors duration-300 font-medium"
               >
                 Privacy
               </Link>
               <Link
                 href="/terms"
-                className="hover:text-blue-400 transition-colors duration-300"
+                className="hover:text-primary transition-colors duration-300 font-medium"
               >
                 Terms
               </Link>
               <Link
                 href="/cookies"
-                className="hover:text-blue-400 transition-colors duration-300"
+                className="hover:text-primary transition-colors duration-300 font-medium"
               >
                 Cookies
               </Link>

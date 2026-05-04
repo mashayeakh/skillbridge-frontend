@@ -5,7 +5,7 @@ import FilterTutors from "./filterTutors"
 import { Tutor } from "@/types/tutor"
 import { fetchTutors } from "@/lib/api/fetchTutor"
 import { Sparkles, Users, Star, BookOpen } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 const BrowseTutors = () => {
@@ -154,22 +154,33 @@ function TutorsSkeleton() {
         </div>
 
         {/* Tutors Grid Skeleton */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 bg-muted rounded-full"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 bg-muted rounded"></div>
-                    <div className="h-3 w-24 bg-muted rounded"></div>
-                  </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="flex flex-col h-full rounded-2xl overflow-hidden border-border/50 shadow-sm">
+              <div className="relative h-48 bg-muted animate-pulse">
+                <div className="absolute bottom-4 left-4 h-24 w-24 rounded-full bg-background ring-4 ring-background shadow-sm" />
+                <div className="absolute top-4 right-4 h-8 w-20 bg-background/50 rounded-full" />
+              </div>
+              <CardContent className="flex-1 p-6 pt-8 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="h-6 w-32 bg-muted rounded animate-pulse" />
+                  <div className="h-6 w-6 bg-muted rounded animate-pulse" />
                 </div>
-                <div className="mt-4 space-y-2">
-                  <div className="h-3 w-full bg-muted rounded"></div>
-                  <div className="h-3 w-5/6 bg-muted rounded"></div>
+                <div className="h-4 w-48 bg-muted/60 rounded animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-3 w-full bg-muted/40 rounded animate-pulse" />
+                  <div className="h-3 w-5/6 bg-muted/40 rounded animate-pulse" />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  {[...Array(3)].map((_, j) => (
+                    <div key={j} className="h-5 w-12 bg-muted/50 rounded animate-pulse" />
+                  ))}
                 </div>
               </CardContent>
+              <CardFooter className="p-6 pt-0 flex gap-3">
+                <div className="h-11 flex-1 bg-muted/60 rounded-xl animate-pulse" />
+                <div className="h-11 flex-1 bg-muted rounded-xl animate-pulse" />
+              </CardFooter>
             </Card>
           ))}
         </div>
