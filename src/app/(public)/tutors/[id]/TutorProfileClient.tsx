@@ -24,7 +24,8 @@ import {
     GraduationCap,
     Search,
     ArrowRight,
-    BookOpen
+    BookOpen,
+    ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tutor } from "@/types/tutor";
@@ -259,8 +260,8 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
             <div className="container mx-auto px-4 mt-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                    {/* --- Main Content (Left) --- */}
-                    <div className="lg:col-span-8 space-y-12">
+                    {/* --- Full Width Content --- */}
+                    <div className="lg:col-span-12 space-y-12">
 
                         {/* Overview Section */}
                         <section id="overview" className="space-y-6">
@@ -268,13 +269,14 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                 <div className="p-2 bg-primary/10 rounded-xl">
                                     <Sparkles className="h-6 w-6 text-primary" />
                                 </div>
-                                <h2 className="text-2xl font-black tracking-tight">About Me & Philosophy</h2>
+                                <h2 className="text-2xl font-black tracking-tight text-foreground">About Me & Philosophy</h2>
                             </div>
-                            <Card className="rounded-[2rem] border-border/50 shadow-sm overflow-hidden group">
+                            <Card className="rounded-[2.5rem] border-border/50 shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
                                 <CardContent className="p-8">
                                     <p className="text-lg text-muted-foreground leading-relaxed whitespace-pre-line">
                                         {tutor.bio || "Welcome to my profile! I am a dedicated educator with a passion for helping students unlock their full potential. My teaching methodology focuses on practical application, interactive problem solving, and building a strong conceptual foundation."}
                                     </p>
+                                    
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                                         {[
                                             { label: "Experience", value: `${tutor.experienceYears} Years`, icon: Clock },
@@ -282,10 +284,10 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                             { label: "Subjects", value: "Mathematics", icon: BookOpen },
                                             { label: "Success Rate", value: "98%", icon: Award },
                                         ].map((stat, i) => (
-                                            <div key={i} className="p-4 rounded-2xl bg-muted/50 border border-border/30 text-center hover:bg-primary/5 transition-colors">
+                                            <div key={i} className="p-5 rounded-[1.5rem] bg-muted/50 border border-border/30 text-center hover:bg-primary/5 transition-all hover:shadow-md">
                                                 <stat.icon className="h-5 w-5 mx-auto mb-2 text-primary" />
-                                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
-                                                <p className="font-black text-foreground">{stat.value}</p>
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+                                                <p className="font-black text-foreground text-lg">{stat.value}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -293,19 +295,17 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                             </Card>
                         </section>
 
-                        {/* Media Gallery / Proof of Work */}
-                    
                         {/* Availability Section */}
                         <section id="availability" className="space-y-6">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="p-2 bg-accent/10 rounded-xl">
                                     <Calendar className="h-6 w-6 text-accent" />
                                 </div>
-                                <h2 className="text-2xl font-black tracking-tight">Available Sessions</h2>
+                                <h2 className="text-2xl font-black tracking-tight text-foreground">Available Sessions</h2>
                             </div>
 
                             {availabilitySlots.length === 0 ? (
-                                <div className="p-12 text-center rounded-[2rem] bg-muted/30 border border-dashed border-border/50">
+                                <div className="p-12 text-center rounded-[2.5rem] bg-muted/30 border border-dashed border-border/50">
                                     <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
                                     <p className="text-muted-foreground font-bold">No public slots available right now.</p>
                                     <p className="text-xs text-muted-foreground mt-1">Check back later or contact for custom schedule.</p>
@@ -315,7 +315,7 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                     {Object.entries(groupedSlots).map(([date, slots]) => (
                                         <div key={date} className="space-y-3">
                                             <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground px-2">{date}</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {slots.map((slot) => (
                                                     <Button
                                                         key={slot.id}
@@ -323,14 +323,14 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                                         onClick={() => !slot.isBooked && handleSelectSlot(slot)}
                                                         disabled={slot.isBooked}
                                                         className={cn(
-                                                            "h-auto p-4 rounded-2xl justify-between border-border/50 transition-all group",
-                                                            slot.isBooked ? "bg-muted cursor-not-allowed opacity-70" : "hover:border-primary hover:bg-primary/5"
+                                                            "h-auto p-6 rounded-[2rem] justify-between border-border/50 transition-all group",
+                                                            slot.isBooked ? "bg-muted cursor-not-allowed opacity-70" : "hover:border-primary hover:bg-primary/5 hover:shadow-lg shadow-sm"
                                                         )}
                                                     >
                                                         <div className="text-left">
                                                             <div className="flex items-center gap-2">
                                                                 <p className={cn(
-                                                                    "font-black text-base transition-colors",
+                                                                    "font-black text-lg transition-colors",
                                                                     slot.isBooked ? "text-muted-foreground" : "text-foreground group-hover:text-primary"
                                                                 )}>
                                                                     {formatTimeUTC(slot.startTime)} - {formatTimeUTC(slot.endTime)}
@@ -343,12 +343,12 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                                             </div>
                                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">UTC Timezone</p>
                                                         </div>
-                                                        <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-4">
                                                             <div className="text-right">
-                                                                <p className="text-xs font-bold text-muted-foreground">Session</p>
-                                                                <p className={cn("font-black", slot.isBooked ? "text-muted-foreground" : "text-primary")}>${tutor.hourlyRate}</p>
+                                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Rate</p>
+                                                                <p className={cn("font-black text-xl", slot.isBooked ? "text-muted-foreground" : "text-primary")}>${tutor.hourlyRate}</p>
                                                             </div>
-                                                            {!slot.isBooked && <ArrowRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />}
+                                                            {!slot.isBooked && <ArrowRight className="h-6 w-6 text-primary opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />}
                                                         </div>
                                                     </Button>
                                                 ))}
@@ -365,40 +365,51 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                 <div className="p-2 bg-primary/10 rounded-xl">
                                     <MessageSquare className="h-6 w-6 text-primary" />
                                 </div>
-                                <h2 className="text-2xl font-black tracking-tight">Student Feedback</h2>
+                                <h2 className="text-2xl font-black tracking-tight text-foreground">Student Feedback</h2>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {[
-                                    { name: "Sarah J.", role: "Advanced Calculus", rating: 5, comment: "Absolutely brilliant explanation! Helped me pass my final exams with an A. Highly recommend for any STEM subjects." },
-                                    { name: "Michael K.", role: "Beginner Physics", rating: 5, comment: "Very patient and thorough. The session was very interactive and the resources provided were excellent." },
-                                ].map((review, i) => (
-                                    <Card key={i} className="rounded-3xl border-border/50 shadow-sm hover:shadow-md transition-shadow">
-                                        <CardContent className="p-6">
-                                            <div className="flex items-center gap-4 mb-4">
-                                                <Avatar className="h-10 w-10">
-                                                    <AvatarFallback className="bg-primary/10 text-primary font-bold">{review.name[0]}</AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <p className="font-black text-sm">{review.name}</p>
-                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{review.role}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {tutor.bookings && tutor.bookings.filter(b => b.review).length > 0 ? (
+                                    tutor.bookings.filter(b => b.review).map((booking, i) => (
+                                        <Card key={i} className="rounded-[2rem] border-border/50 shadow-sm hover:shadow-md transition-shadow bg-card/50">
+                                            <CardContent className="p-6">
+                                                <div className="flex items-center gap-4 mb-4">
+                                                    <Avatar className="h-12 w-12">
+                                                        <AvatarImage src={booking.student.image || ""} />
+                                                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                                                            {booking.student.name[0]}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <p className="font-black text-sm">{booking.student.name}</p>
+                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Verified Student</p>
+                                                    </div>
+                                                    <div className="ml-auto flex gap-0.5">
+                                                        {[...Array(5)].map((_, j) => (
+                                                            <Star 
+                                                                key={j} 
+                                                                className={cn(
+                                                                    "h-3 w-3", 
+                                                                    j < (booking.review?.rating || 0) 
+                                                                        ? "fill-yellow-400 text-yellow-400" 
+                                                                        : "text-muted-foreground/30"
+                                                                )} 
+                                                            />
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                                <div className="ml-auto flex gap-0.5">
-                                                    {[...Array(5)].map((_, j) => (
-                                                        <Star key={j} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground leading-relaxed italic">"{review.comment}"</p>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                                                <p className="text-sm text-muted-foreground leading-relaxed italic">"{booking.review?.comment}"</p>
+                                            </CardContent>
+                                        </Card>
+                                    ))
+                                ) : (
+                                    <div className="col-span-full p-12 text-center rounded-[2.5rem] bg-muted/30 border border-dashed border-border/50">
+                                        <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
+                                        <p className="text-muted-foreground font-bold">No student feedback yet.</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Be the first to leave a review after your session!</p>
+                                    </div>
+                                )}
                             </div>
                         </section>
-                    </div>
-
-                    {/* --- Sidebar (Right) --- */}
-                    <div className="lg:col-span-4">
-                        {/*  */}
                     </div>
                 </div>
 

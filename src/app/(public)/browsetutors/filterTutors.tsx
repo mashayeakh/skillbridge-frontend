@@ -329,7 +329,7 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                         <div className="flex items-center gap-2">
                                             <Users className="h-4 w-4 text-secondary" />
                                             <span className="text-xs font-black text-muted-foreground uppercase">
-                                                {(t.rating * 20 + (t.id.charCodeAt(0) % 50)).toFixed(0)}+ Sessions
+                                                {t.bookings?.length || 0} Sessions
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -339,16 +339,9 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                     </div>
                                 </CardContent>
 
-                                <CardFooter className="p-8 pt-0 flex gap-4">
+                                <CardFooter className="p-8 pt-0">
                                     <Button
-                                        variant="outline"
-                                        className="flex-1 rounded-2xl h-14 border-border/50 hover:bg-secondary/5 transition-all font-black text-xs uppercase tracking-widest"
-                                        onClick={() => handleContactTutor(t.id)}
-                                    >
-                                        Message
-                                    </Button>
-                                    <Button
-                                        className="flex-1 rounded-2xl h-14 bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                        className="w-full rounded-2xl h-14 bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
                                         onClick={() => handleViewProfile(t.id)}
                                     >
                                         Details
@@ -410,13 +403,6 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                             >
                                                 View Full Profile
                                             </Button>
-                                            <Button
-                                                variant="ghost"
-                                                className="font-black text-xs uppercase tracking-widest hover:text-secondary transition-colors"
-                                                onClick={() => handleContactTutor(t.id)}
-                                            >
-                                                Message Tutor
-                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -467,7 +453,6 @@ export default function FilterTutors({ tutors }: FilterTutorsProps) {
                                             <td className="p-8">
                                                 <div className="flex gap-4 justify-center">
                                                     <Button size="sm" className="rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest h-10 px-6 shadow-lg shadow-primary/20" onClick={() => handleViewProfile(t.id)}>Details</Button>
-                                                    <Button size="sm" variant="outline" className="rounded-xl border-border/50 font-black text-[10px] uppercase tracking-widest h-10 px-6" onClick={() => handleContactTutor(t.id)}>Chat</Button>
                                                 </div>
                                             </td>
                                         </tr>

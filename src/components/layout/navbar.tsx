@@ -14,6 +14,7 @@ import {
   Search,
   Home,
   Calendar,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,9 +24,12 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
+  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuViewport,
 } from "@/components/ui/navigation-menu";
 import {
   Sheet,
@@ -75,8 +79,9 @@ const ROLE_ROUTES = {
 
 interface MenuItem {
   title: string;
-  url: string;
+  url?: string;
   icon?: React.ReactNode;
+  items?: MenuItem[];
 }
 
 interface NavbarProps {
@@ -109,10 +114,15 @@ const Navbar = ({
   },
   menu = [
     { title: "Home", url: "/" },
-    { title: "About", url: "/about" },
-    { title: "Browse Tutors", url: "/browse-tutor" },
-    { title: "Blog", url: "/blog" },
-    { title: "Help", url: "/help" },
+    { title: "Find Tutors", url: "/browse-tutor" },
+    { 
+      title: "Resources", 
+      items: [
+        { title: "About Us", url: "/about" },
+        { title: "Blog", url: "/blog" },
+        { title: "Help Center", url: "/help" },
+      ]
+    },
     { title: "Become a Tutor", url: "/become-tutor" },
   ],
 }: NavbarProps) => {
@@ -138,9 +148,18 @@ const Navbar = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/login");
+    try {
+      setIsLoggingOut(true);
+      await authClient.signOut();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -188,17 +207,42 @@ const Navbar = ({
           </Link>
 
           {/* Minimalist Navigation */}
-          <NavigationMenu className="flex-1 max-w-2xl">
+          <NavigationMenu viewport={false} className="flex-1 max-w-2xl">
             <NavigationMenuList className="gap-2 justify-center">
               {menu.map((item) => {
                 if (item.title === "Become a Tutor" && (role === "TUTOR" || role === "ADMIN")) return null;
-                if (item.title === "Browse Tutors" && (role === "TUTOR" || role === "ADMIN")) return null;
+
+                if (item.items) {
+                  return (
+                    <NavigationMenuItem key={item.title}>
+                      <NavigationMenuTrigger className="bg-transparent font-bold text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-2">
+                        {item.title}
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent className="left-1/2 -translate-x-1/2 md:absolute md:w-auto">
+                        <ul className="grid w-[200px] gap-2 p-3 bg-background border border-border/50 rounded-2xl shadow-xl">
+                          {item.items.map((subItem) => (
+                            <li key={subItem.title}>
+                              <NavigationMenuLink asChild>
+                                <Link
+                                  href={subItem.url!}
+                                  className="block select-none space-y-1 rounded-xl p-3 leading-none no-underline outline-none transition-all hover:bg-primary/5 hover:text-primary"
+                                >
+                                  <div className="text-sm font-black leading-none">{subItem.title}</div>
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                          ))}
+                        </ul>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  );
+                }
 
                 return (
                   <NavigationMenuItem key={item.title}>
                     <NavigationMenuLink asChild>
                       <Link
-                        href={item.url}
+                        href={item.url!}
                         className="relative px-4 py-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors group/navlink"
                       >
                         {item.title}
@@ -213,8 +257,13 @@ const Navbar = ({
           {/* Sophisticated Actions */}
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            
-            {!isPending && user ? (
+
+            {isPending ? (
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+                <div className="h-4 w-20 rounded bg-muted animate-pulse hidden md:block" />
+              </div>
+            ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 p-1 rounded-full hover:bg-muted/50 transition-all group border border-transparent hover:border-border/50">
@@ -251,60 +300,65 @@ const Navbar = ({
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </div>
-                  
-                  <DropdownMenuSeparator className="bg-border/50" />
-                  
-                    <DropdownMenuGroup className="p-1">
-                      {routes?.dashboard && (
-                        <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary">
-                          <Link href={routes.dashboard} className="flex items-center gap-3">
-                            <LayoutDashboard className="h-4 w-4" />
-                            <span className="font-bold text-sm">Dashboard</span>
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
-                      
-                      {/* Role Specific Actions */}
-                      {role === "STUDENT" && (
-                        <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary">
-                          <Link href="/dashboard/bookings" className="flex items-center gap-3">
-                            <BookOpen className="h-4 w-4" />
-                            <span className="font-bold text-sm">My Bookings</span>
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
-                      {role === "TUTOR" && (
-                        <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary">
-                          <Link href="/tutor/availability" className="flex items-center gap-3">
-                            <Calendar className="h-4 w-4" />
-                            <span className="font-bold text-sm">Manage Availability</span>
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
 
+                  <DropdownMenuSeparator className="bg-border/50" />
+
+                  <DropdownMenuGroup className="p-1">
+                    {routes?.dashboard && (
                       <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary">
+                        <Link href={routes.dashboard} className="flex items-center gap-3">
+                          <LayoutDashboard className="h-4 w-4" />
+                          <span className="font-bold text-sm">Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+
+                    {/* Role Specific Actions */}
+                    {role === "STUDENT" && (
+                      <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary">
+                        <Link href="/dashboard/bookings" className="flex items-center gap-3">
+                          <BookOpen className="h-4 w-4" />
+                          <span className="font-bold text-sm">My Bookings</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {role === "TUTOR" && (
+                      <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary">
+                        <Link href="/tutor/availability" className="flex items-center gap-3">
+                          <Calendar className="h-4 w-4" />
+                          <span className="font-bold text-sm">Manage Availability</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+
+                    {/* <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary">
                         <Link href={role === "ADMIN" ? "/admin/dashboard" : (routes?.profile || "#")} className="flex items-center gap-3">
                           <User className="h-4 w-4" />
                           <span className="font-bold text-sm">Profile</span>
                         </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary">
+                      </DropdownMenuItem> */}
+                    {/* <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary">
                         <Link href="/settings" className="flex items-center gap-3">
                           <Settings className="h-4 w-4" />
                           <span className="font-bold text-sm">Settings</span>
                         </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
+                      </DropdownMenuItem> */}
+                  </DropdownMenuGroup>
 
                   <DropdownMenuSeparator className="bg-border/50" />
-                  
+
                   <div className="p-1">
                     <DropdownMenuItem
                       onClick={handleLogout}
-                      className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-destructive/5 text-destructive font-bold text-sm flex items-center gap-3"
+                      disabled={isLoggingOut}
+                      className="rounded-xl px-3 py-2.5 cursor-pointer focus:bg-red-50 focus:text-red-600 text-red-600 font-bold text-sm flex items-center gap-3 disabled:opacity-70"
                     >
-                      <LogOut className="h-4 w-4" />
-                      Sign Out
+                      {isLoggingOut ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <LogOut className="h-4 w-4" />
+                      )}
+                      {isLoggingOut ? "Signing Out..." : "Sign Out"}
                     </DropdownMenuItem>
                   </div>
                 </DropdownMenuContent>
@@ -374,10 +428,29 @@ const Navbar = ({
                     <nav className="space-y-1">
                       {menu.map((item) => {
                         if (item.title === "Become a Tutor" && (role === "TUTOR" || role === "ADMIN")) return null;
+
+                        if (item?.items) {
+                          return (
+                            <div key={item.title} className="space-y-1">
+                              <p className="px-4 pt-4 pb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{item.title}</p>
+                              {item.items.map((subItem) => (
+                                <Link
+                                  key={subItem.title}
+                                  href={subItem.url!}
+                                  className="flex items-center justify-between p-4 rounded-xl hover:bg-primary/5 group/mobnav transition-all"
+                                >
+                                  <span className="font-bold text-foreground/80 group-hover/mobnav:text-secondary">{subItem.title}</span>
+                                  <ChevronDown className="h-4 w-4 -rotate-90 opacity-40" />
+                                </Link>
+                              ))}
+                            </div>
+                          );
+                        }
+
                         return (
                           <Link
                             key={item.title}
-                            href={item.url}
+                            href={item.url!}
                             className="flex items-center justify-between p-4 rounded-xl hover:bg-primary/5 group/mobnav transition-all"
                           >
                             <span className="font-bold text-foreground/80 group-hover/mobnav:text-secondary">{item.title}</span>

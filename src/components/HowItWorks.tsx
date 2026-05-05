@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { 
     Search, 
     Calendar, 
@@ -192,12 +193,14 @@ export default function HowItWorks() {
 
                 {/* Final CTA Button */}
                 <div className="mt-20 text-center">
-                    <button className="group relative px-8 py-4 bg-foreground text-background rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-xl hover:shadow-primary/20">
-                        <span className="relative z-10 flex items-center gap-3">
-                            Get Started Now
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </span>
-                    </button>
+                    <Link href="/register">
+                        <button className="group relative px-8 py-4 bg-foreground text-background rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-xl hover:shadow-primary/20">
+                            <span className="relative z-10 flex items-center gap-3">
+                                Get Started Now
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </span>
+                        </button>
+                    </Link>
                 </div>
             </div>
         </section>
