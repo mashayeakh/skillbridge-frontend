@@ -116,13 +116,12 @@ export default function HelpPage() {
                         <p className="text-white/80 max-w-xl mx-auto font-medium">
                             Our support experts are ready to assist you. Start a live chat or send us a message and we'll get back to you immediately.
                         </p>
-                        <div className="flex justify-center gap-4 pt-4">
-                            <Button className="rounded-2xl h-14 px-8 bg-white text-primary font-black uppercase tracking-widest text-xs hover:scale-105 transition-all">
-                                Open Live Chat
-                            </Button>
-                            <Button variant="outline" className="rounded-2xl h-14 px-8 border-white/30 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10">
-                                Contact Email
-                            </Button>
+                        <div className="flex justify-center pt-4">
+                            <a href="mailto:islammasayekh@gmail.com">
+                                <button className="rounded-[1.5rem] h-14 px-12 bg-white text-primary font-black uppercase tracking-[0.2em] text-[10px] shadow-xl hover:bg-white/90 hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center">
+                                    Contact Email
+                                </button>
+                            </a>
                         </div>
                     </CardContent>
                 </Card>

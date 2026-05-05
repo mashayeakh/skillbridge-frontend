@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, User, Home, LogOut, ListChecks } from "lucide-react";
+import { Calendar, User, Home, LogOut, ListChecks, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-clients";
@@ -34,6 +34,11 @@ export function AdminDashboardSidebar() {
             name: "User Management",
             href: "/admin/manage-user",
             icon: User,
+        },
+        {
+            name: "Platform Settings",
+            href: "/admin/settings",
+            icon: Settings, 
         },
     ];
 

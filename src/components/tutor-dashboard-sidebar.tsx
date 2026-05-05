@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, User, Home } from "lucide-react";
+import { Calendar, User, Home, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -17,6 +17,11 @@ export function TutorDashboardSidebar() {
             name: "Dashboard",
             href: "/tutor/dashboard",
             icon: Home,
+        },
+        {
+            name: "Bookings",
+            href: "/tutor/bookings",
+            icon: BookOpen,
         },
         {
             name: "Availability",

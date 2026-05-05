@@ -1,38 +1,31 @@
-import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { ReactNode } from "react";
-import { House } from "lucide-react";
-// import { useRouter } from "next/router";
-// import { useRouter } from "next/navigation";
 import Link from 'next/link';
-import { TutorDashboardSidebar } from "@/components/tutor-dashboard-sidebar";
+import { House } from "lucide-react";
 import { AdminDashboardSidebar } from "@/components/admin-dashboard-sidebar";
+import { UserDropdown } from "@/components/user-dropdown";
 
 export default function DashboardLayout({
     children,
 }: {
     children: ReactNode;
 }) {
-    ;
-
     return (
         <div className="flex min-h-screen bg-gray-50">
             <AdminDashboardSidebar />
             <main className="flex-1 pl-64">
-                {/* Optional: Header */}
-                <header className="sticky top-0 z-30 h-16 border-b bg-white px-6 flex items-center justify-between">
+                <header className="sticky top-0 z-30 h-16 border-b bg-white/80 backdrop-blur-md px-6 flex items-center justify-between">
                     <div className="flex justify-between w-full items-center gap-4">
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-800">Dashboard</h2>
-                            <p className="text-sm text-gray-500">Welcome back!</p>
+                            <h2 className="text-lg font-bold text-gray-900">Admin Panel</h2>
+                            <p className="text-xs text-gray-500">Platform Management Hub</p>
                         </div>
-                        <div className="ml-auto">
+                        <div className="flex items-center gap-4">
                             <Link href="/">
-                                <House className="h-6 w-6 text-gray-600 cursor-pointer" />
+                                <House className="h-5 w-5 text-gray-600 hover:text-primary transition-colors cursor-pointer" />
                             </Link>
+                            <div className="h-6 w-[1px] bg-border/50 mx-1" />
+                            <UserDropdown />
                         </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {/* Notifications, search, etc. can go here */}
                     </div>
                 </header>
 
