@@ -573,3 +573,41 @@ export async function deleteTutorAvailabilitySlot(id: string) {
         };
     }
 }
+
+// 4. Get tutor's bookings (unified view)
+export async function getTutorBookings() {
+    try {
+        const cookieStore = await cookies();
+        const allCookies = cookieStore.getAll();
+        const cookieString = allCookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
+
+        const res = await fetch(`${BACKEND_URL}/api/tutor/bookings`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cookie': cookieString,
+            },
+            cache: 'no-store',
+        });
+
+        console.log('📡 Tutor bookings response status:', res.status);
+
+        if (!res.ok) {
+            throw new Error(`Failed to fetch bookings: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return {
+            success: true,
+            data: data.data || data,
+            message: data.message || 'Bookings loaded successfully'
+        };
+    } catch (error: any) {
+        console.error('Get tutor bookings error:', error);
+        return {
+            success: false,
+            message: error.message || 'Failed to load bookings',
+            data: []
+        };
+    }
+}

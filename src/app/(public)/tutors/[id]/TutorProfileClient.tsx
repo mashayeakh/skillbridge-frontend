@@ -6,22 +6,22 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-    Star, 
-    Clock, 
-    DollarSign, 
-    Calendar, 
-    CheckCircle, 
-    Loader2, 
-    X, 
-    CalendarDays, 
+import {
+    Star,
+    Clock,
+    DollarSign,
+    Calendar,
+    CheckCircle,
+    Loader2,
+    X,
+    CalendarDays,
     UserCheck,
-    Users, 
-    MapPin, 
-    Award, 
-    Sparkles, 
-    MessageSquare, 
-    GraduationCap, 
+    Users,
+    MapPin,
+    Award,
+    Sparkles,
+    MessageSquare,
+    GraduationCap,
     Search,
     ArrowRight,
     BookOpen
@@ -117,8 +117,8 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
     }, [tutor.id]);
 
     const handleSelectSlot = (slot: AvailabilitySlot) => {
-        if (hasExistingBooking) {
-            toast.error("You have already booked a session with this tutor");
+        if (slot.isBooked) {
+            toast.error("This slot is already booked");
             return;
         }
         setSelectedSlot(slot);
@@ -126,10 +126,6 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
     };
 
     const handleBookSession = async () => {
-        if (hasExistingBooking) {
-            toast.error("You have already booked a session with this tutor");
-            return;
-        }
         if (!selectedSlot) {
             toast.error("Please select an available time slot");
             return;
@@ -152,6 +148,7 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                 endTime: endTime.toISOString(),
                 status: "CONFIRMED",
                 price: tutor.hourlyRate * durationHours,
+                slotId: selectedSlot.id,
             };
 
             const result = await createStudentBooking(bookingPayload);
@@ -162,7 +159,9 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                 toast.success("🎉 Session booked successfully!");
                 setShowModal(false);
                 setSelectedSlot(null);
-                setAvailabilitySlots(prev => prev.filter(slot => slot.id !== selectedSlot.id));
+                setAvailabilitySlots(prev => prev.map(slot =>
+                    slot.id === selectedSlot.id ? { ...slot, isBooked: true } : slot
+                ));
             } else {
                 toast.error(result.message || "Failed to book session");
             }
@@ -245,6 +244,12 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                     <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
                                     Verified Tutor
                                 </Badge>
+                                {hasExistingBooking && (
+                                    <Badge className="bg-emerald-500 text-white border-0 font-bold px-3 py-1 animate-pulse">
+                                        <UserCheck className="h-3.5 w-3.5 mr-1.5" />
+                                        Session Booked
+                                    </Badge>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -253,10 +258,10 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
 
             <div className="container mx-auto px-4 mt-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    
+
                     {/* --- Main Content (Left) --- */}
                     <div className="lg:col-span-8 space-y-12">
-                        
+
                         {/* Overview Section */}
                         <section id="overview" className="space-y-6">
                             <div className="flex items-center gap-3 mb-2">
@@ -289,29 +294,7 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                         </section>
 
                         {/* Media Gallery / Proof of Work */}
-                        <section id="gallery" className="space-y-6">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-secondary/10 rounded-xl">
-                                    <Search className="h-6 w-6 text-secondary" />
-                                </div>
-                                <h2 className="text-2xl font-black tracking-tight">Gallery & Resources</h2>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="aspect-video rounded-2xl bg-muted overflow-hidden relative group cursor-pointer shadow-lg">
-                                        <img 
-                                            src={`https://images.unsplash.com/photo-15${i === 1 ? '1321902014-4b8b6a' : i === 2 ? '2173397336-9d1' : '3263760744-79' }?auto=format&fit=crop&w=400&q=80`} 
-                                            alt="Tutor resources" 
-                                            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                                        />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <span className="text-white font-bold text-sm">View Resource</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
+                    
                         {/* Availability Section */}
                         <section id="availability" className="space-y-6">
                             <div className="flex items-center gap-3 mb-2">
@@ -320,7 +303,7 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                 </div>
                                 <h2 className="text-2xl font-black tracking-tight">Available Sessions</h2>
                             </div>
-                            
+
                             {availabilitySlots.length === 0 ? (
                                 <div className="p-12 text-center rounded-[2rem] bg-muted/30 border border-dashed border-border/50">
                                     <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
@@ -337,25 +320,35 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                                     <Button
                                                         key={slot.id}
                                                         variant="outline"
-                                                        onClick={() => handleSelectSlot(slot)}
-                                                        disabled={hasExistingBooking}
+                                                        onClick={() => !slot.isBooked && handleSelectSlot(slot)}
+                                                        disabled={slot.isBooked}
                                                         className={cn(
-                                                            "h-auto p-4 rounded-2xl justify-between border-border/50 hover:border-primary hover:bg-primary/5 transition-all group",
-                                                            hasExistingBooking && "opacity-50 grayscale cursor-not-allowed"
+                                                            "h-auto p-4 rounded-2xl justify-between border-border/50 transition-all group",
+                                                            slot.isBooked ? "bg-muted cursor-not-allowed opacity-70" : "hover:border-primary hover:bg-primary/5"
                                                         )}
                                                     >
                                                         <div className="text-left">
-                                                            <p className="font-black text-base text-foreground group-hover:text-primary transition-colors">
-                                                                {formatTimeUTC(slot.startTime)} - {formatTimeUTC(slot.endTime)}
-                                                            </p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className={cn(
+                                                                    "font-black text-base transition-colors",
+                                                                    slot.isBooked ? "text-muted-foreground" : "text-foreground group-hover:text-primary"
+                                                                )}>
+                                                                    {formatTimeUTC(slot.startTime)} - {formatTimeUTC(slot.endTime)}
+                                                                </p>
+                                                                {slot.isBooked && (
+                                                                    <Badge variant="outline" className="text-[10px] bg-red-50 text-red-500 border-red-200">
+                                                                        Booked
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
                                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">UTC Timezone</p>
                                                         </div>
                                                         <div className="flex items-center gap-3">
                                                             <div className="text-right">
                                                                 <p className="text-xs font-bold text-muted-foreground">Session</p>
-                                                                <p className="font-black text-primary">${tutor.hourlyRate}</p>
+                                                                <p className={cn("font-black", slot.isBooked ? "text-muted-foreground" : "text-primary")}>${tutor.hourlyRate}</p>
                                                             </div>
-                                                            <ArrowRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
+                                                            {!slot.isBooked && <ArrowRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />}
                                                         </div>
                                                     </Button>
                                                 ))}
@@ -405,76 +398,7 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
 
                     {/* --- Sidebar (Right) --- */}
                     <div className="lg:col-span-4">
-                        <div className="sticky top-28 space-y-6">
-                            {/* Booking CTA Card */}
-                            <Card className="rounded-[2.5rem] border-border/50 shadow-2xl overflow-hidden bg-card/50 backdrop-blur-xl">
-                                <div className="p-8 space-y-6">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">Hourly Rate</p>
-                                            <h3 className="text-4xl font-black text-primary">${tutor.hourlyRate}<span className="text-lg text-muted-foreground font-bold">/hr</span></h3>
-                                        </div>
-                                        <div className="p-3 bg-primary/10 rounded-2xl">
-                                            <DollarSign className="h-8 w-8 text-primary" />
-                                        </div>
-                                    </div>
-
-                                    <Separator className="bg-border/50" />
-
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-emerald-500/10 rounded-lg">
-                                                <CheckCircle className="h-4 w-4 text-emerald-500" />
-                                            </div>
-                                            <p className="text-sm font-bold text-muted-foreground">Free 15-min Consultation</p>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-blue-500/10 rounded-lg">
-                                                <Clock className="h-4 w-4 text-blue-500" />
-                                            </div>
-                                            <p className="text-sm font-bold text-muted-foreground">Flexible Online Sessions</p>
-                                        </div>
-                                    </div>
-
-                                    {hasExistingBooking ? (
-                                        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center">
-                                            <p className="text-emerald-600 font-black text-sm mb-1">✅ Session Booked</p>
-                                            <p className="text-[10px] font-bold text-emerald-600/80 uppercase tracking-widest">You're all set for your lesson!</p>
-                                        </div>
-                                    ) : (
-                                        <Button 
-                                            className="w-full h-14 rounded-2xl text-lg font-black bg-gradient-to-r from-primary to-secondary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-                                            onClick={() => {
-                                                const firstSlot = availabilitySlots[0];
-                                                if (firstSlot) handleSelectSlot(firstSlot);
-                                                else toast.info("Please select a specific slot from the availability section.");
-                                            }}
-                                        >
-                                            Reserve a Spot
-                                        </Button>
-                                    )}
-
-                                    <p className="text-[10px] text-center text-muted-foreground font-bold uppercase tracking-widest">
-                                        No hidden fees • Cancel up to 24h before
-                                    </p>
-                                </div>
-                            </Card>
-
-                            {/* Trust Card */}
-                            <Card className="rounded-[2rem] border-border/50 bg-muted/30">
-                                <CardContent className="p-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
-                                            <Award className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-sm">Certified Expert</p>
-                                            <p className="text-xs text-muted-foreground">Background verified by SkillBridge</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
+                        {/*  */}
                     </div>
                 </div>
 
@@ -546,7 +470,7 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                 </div>
                             </div>
 
-                            <Button 
+                            <Button
                                 onClick={handleBookSession}
                                 disabled={isBooking || !studentId}
                                 className="w-full h-14 rounded-2xl text-lg font-black bg-primary text-white shadow-xl shadow-primary/20 transition-all active:scale-95"
@@ -558,7 +482,7 @@ export default function TutorProfileClient({ tutor, filteredTutors }: TutorProfi
                                     </div>
                                 ) : "Pay & Confirm Booking"}
                             </Button>
-                            
+
                             {!studentId && (
                                 <p className="text-[10px] text-center text-destructive font-black uppercase tracking-widest">
                                     ⚠️ Please sign in as a student to book

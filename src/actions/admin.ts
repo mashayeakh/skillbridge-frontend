@@ -19,7 +19,8 @@ export async function apiGet(endpoint: string) {
 
     console.log(res)
     if (!res.ok) {
-        throw new Error(`Failed to fetch ${endpoint}: ${res.status}`);
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to fetch ${endpoint}: ${res.status}`);
     }
 
     const data = await res.json();
@@ -42,7 +43,8 @@ export async function apiPatch(endpoint: string, body: any) {
     });
 
     if (!res.ok) {
-        throw new Error(`Failed to patch ${endpoint}: ${res.status}`);
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to patch ${endpoint}: ${res.status}`);
     }
 
     const data = await res.json();
@@ -58,7 +60,10 @@ export async function apiPost(endpoint: string, body: any) {
         body: JSON.stringify(body),
         credentials: "include",
     });
-    if (!res.ok) throw new Error(`Failed to post ${endpoint}: ${res.status}`);
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to post ${endpoint}: ${res.status}`);
+    }
     return await res.json();
 }
 
@@ -70,7 +75,10 @@ export async function apiDelete(endpoint: string) {
         headers: { "Content-Type": "application/json", Cookie: cookieStore.toString() },
         credentials: "include",
     });
-    if (!res.ok) throw new Error(`Failed to delete ${endpoint}: ${res.status}`);
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to delete ${endpoint}: ${res.status}`);
+    }
     return await res.json();
 }
 

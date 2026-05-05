@@ -65,6 +65,7 @@ export async function createStudentBooking(bookingData: {
     endTime: string;
     status: string;
     price: number;
+    slotId?: string;
 }) {
     try {
         const cookieStore = await cookies();

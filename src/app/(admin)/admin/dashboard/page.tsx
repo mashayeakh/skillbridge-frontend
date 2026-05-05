@@ -12,19 +12,68 @@ import {
     TrendingUp,
     ChevronLeft,
     ChevronRight,
-    MoreVertical,
     Eye,
     Mail,
     Phone,
     Shield,
-    XCircle
+    XCircle,
+    ArrowUpRight,
+    ArrowDownRight,
+    Layers,
+    BookOpen
 } from "lucide-react";
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+    PieChart,
+    Pie,
+    Cell,
+    Legend
+} from "recharts";
 import { apiGet } from "@/actions/admin";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+// --- Mock Data ---
+const revenueData = [
+    { name: "Mon", revenue: 4500, bookings: 24 },
+    { name: "Tue", revenue: 5200, bookings: 30 },
+    { name: "Wed", revenue: 4800, bookings: 22 },
+    { name: "Thu", revenue: 6100, bookings: 35 },
+    { name: "Fri", revenue: 5900, bookings: 32 },
+    { name: "Sat", revenue: 8200, bookings: 48 },
+    { name: "Sun", revenue: 7500, bookings: 42 },
+];
+
+const growthData = [
+    { month: "Jan", users: 400, tutors: 120 },
+    { month: "Feb", users: 600, tutors: 180 },
+    { month: "Mar", users: 800, tutors: 250 },
+    { month: "Apr", users: 1100, tutors: 320 },
+    { month: "May", users: 1500, tutors: 450 },
+    { month: "Jun", users: 2100, tutors: 600 },
+];
+
+const categoryData = [
+    { name: "Programming", value: 400, color: "#2563eb" },
+    { name: "Design", value: 300, color: "#7c3aed" },
+    { name: "Marketing", value: 200, color: "#db2777" },
+    { name: "Business", value: 278, color: "#ea580c" },
+    { name: "Languages", value: 189, color: "#16a34a" },
+];
 
 type Analytics = {
-    users: { total: number; students: number; tutors: number };
-    bookings: { total: number; confirmed: number; cancelled: number; completed: number };
-    revenue: { totalRevenue: number; averageBookingPrice: number };
+    users: { total: number; students: number; tutors: number; trend: string };
+    bookings: { total: number; confirmed: number; cancelled: number; completed: number; trend: string };
+    revenue: { totalRevenue: number; averageBookingPrice: number; trend: string };
     platformHealth: { activeUsers: number; completionRate: number };
 };
 
@@ -40,47 +89,36 @@ type User = {
     bookingsCount?: number;
 };
 
-type VerificationSummary = {
-    verified: number;
-    pending: number;
-    rejected: number;
-};
-
-type BookingStats = {
-    today: number;
-    week: number;
-    month: number;
-};
-
 export default function AdminDashboardPage() {
     const [analytics, setAnalytics] = useState<Analytics | null>(null);
     const [users, setUsers] = useState<User[]>([]);
-    const [verification, setVerification] = useState<VerificationSummary | null>(null);
+    const [revenueStats, setRevenueStats] = useState<any[]>(revenueData);
+    const [growthStats, setGrowthStats] = useState<any[]>(growthData);
+    const [categoryStats, setCategoryStats] = useState<any[]>(categoryData);
+    const [verificationRequests, setVerificationRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [usersPerPage] = useState(8);
-    const [bookingStats, setBookingStats] = useState<BookingStats | null>(null);
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [userTypeFilter, setUserTypeFilter] = useState<"ALL" | "TUTOR" | "STUDENT">("ALL");
 
     useEffect(() => {
         async function fetchDashboard() {
             try {
-                const analyticsRes = await apiGet("/api/admin/dashboard");
-                console.log("anayltics", analyticsRes)
+                const [analyticsRes, usersRes, revRes, growthRes, catRes, verRes] = await Promise.all([
+                    apiGet("/api/admin/dashboard"),
+                    apiGet("/api/admin/dashboard/users"),
+                    apiGet("/api/admin/dashboard/revenue-stats"),
+                    apiGet("/api/admin/dashboard/growth-stats"),
+                    apiGet("/api/admin/dashboard/category-stats"),
+                    apiGet("/api/admin/dashboard/verification-requests")
+                ]);
+
                 if (analyticsRes.success) setAnalytics(analyticsRes.data);
-
-                const usersRes = await apiGet("/api/admin/dashboard/users");
                 if (usersRes.success) setUsers(usersRes.data);
-
-                const verificationRes = await apiGet("/api/admin/dashboard/verification-summary");
-                if (verificationRes.success) setVerification(verificationRes.data);
-
-                // Mock booking stats - replace with actual API call
-                setBookingStats({
-                    today: 24,
-                    week: 156,
-                    month: 542
-                });
+                if (revRes.success && revRes.data.length > 0) setRevenueStats(revRes.data);
+                if (growthRes.success && growthRes.data.length > 0) setGrowthStats(growthRes.data);
+                if (catRes.success && catRes.data.length > 0) setCategoryStats(catRes.data);
+                if (verRes.success) setVerificationRequests(verRes.data);
 
             } catch (err) {
                 console.error("Dashboard fetch error:", err);
@@ -92,472 +130,395 @@ export default function AdminDashboardPage() {
         fetchDashboard();
     }, []);
 
+    // Filter logic
+    const filteredUsers = users.filter(user => {
+        if (userTypeFilter === "ALL") return true;
+        return user.role.toUpperCase() === userTypeFilter;
+    });
+
     // Pagination logic
     const indexOfLastUser = currentPage * usersPerPage;
     const indexOfFirstUser = indexOfLastUser - usersPerPage;
-    const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
-    const totalPages = Math.ceil(users.length / usersPerPage);
-
-    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-    const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
-    const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
-
-    const handleViewUserDetails = (user: User) => {
-        setSelectedUser(user);
-    };
-
-    const closeUserModal = () => {
-        setSelectedUser(null);
-    };
+    const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
-                    <p className="text-gray-600">Loading dashboard...</p>
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600 font-medium">Loading platform analytics...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-                    <p className="text-gray-600">Welcome back! Here is what is happening with your platform.</p>
-                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span>Last updated: Just now</span>
-                    </div>
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8 space-y-8">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-black tracking-tight text-gray-900">Platform Overview</h1>
+                    <p className="text-gray-500 font-medium mt-1">Real-time performance and user distribution</p>
                 </div>
-
-                {/* Analytics Cards Grid */}
-                {analytics && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        {/* Users Card */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-blue-50 rounded-xl">
-                                    <Users className="h-6 w-6 text-blue-600" />
-                                </div>
-                                <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                                    +12.5%
-                                </span>
-                            </div>
-                            <h3 className="text-gray-500 text-sm font-medium mb-2">Total Users</h3>
-                            <p className="text-3xl font-bold text-gray-900 mb-1">{analytics.users.total}</p>
-                            <div className="flex items-center gap-4 text-sm text-gray-500 mt-4">
-                                <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                    <span>Students: {analytics.users.students}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                    <span>Tutors: {analytics.users.tutors}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Bookings Card */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-green-50 rounded-xl">
-                                    <Calendar className="h-6 w-6 text-green-600" />
-                                </div>
-                                <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                                    +8.2%
-                                </span>
-                            </div>
-                            <h3 className="text-gray-500 text-sm font-medium mb-2">Total Bookings</h3>
-                            <p className="text-3xl font-bold text-gray-900 mb-1">{analytics.bookings.total}</p>
-                            <div className="grid grid-cols-2 gap-2 mt-4">
-                                <div className="text-sm">
-                                    <div className="text-gray-500">Confirmed</div>
-                                    <div className="font-semibold text-green-600">{analytics.bookings.confirmed}</div>
-                                </div>
-                                <div className="text-sm">
-                                    <div className="text-gray-500">Completed</div>
-                                    <div className="font-semibold text-blue-600">{analytics.bookings.completed}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Platform Health Card */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-orange-50 rounded-xl">
-                                    <Activity className="h-6 w-6 text-orange-600" />
-                                </div>
-                                <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                                    {analytics.platformHealth.completionRate}%
-                                </span>
-                            </div>
-                            <h3 className="text-gray-500 text-sm font-medium mb-2">Platform Health</h3>
-                            <p className="text-3xl font-bold text-gray-900 mb-1">
-                                {analytics.platformHealth.activeUsers}
-                            </p>
-                            <div className="text-sm text-gray-500 mt-1">Active Users</div>
-                            <div className="mt-4">
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                        className="bg-green-600 h-2 rounded-full"
-                                        style={{ width: `${analytics.platformHealth.completionRate}%` }}
-                                    ></div>
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1 text-right">
-                                    Completion Rate: {analytics.platformHealth.completionRate}%
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Second Row: Additional Stats */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    {/* Verification Summary */}
-                    {verification && (
-                        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <UserCheck className="h-5 w-5 text-blue-600" />
-                                Verification Summary
-                            </h2>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <CheckCircle className="h-5 w-5 text-green-600" />
-                                        <div>
-                                            <div className="text-sm text-gray-500">Verified</div>
-                                            <div className="text-xl font-bold text-gray-900">{verification.verified}</div>
-                                        </div>
-                                    </div>
-                                    <div className="text-green-600 font-semibold">✓</div>
-                                </div>
-
-                                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <Clock className="h-5 w-5 text-yellow-600" />
-                                        <div>
-                                            <div className="text-sm text-gray-500">Pending</div>
-                                            <div className="text-xl font-bold text-gray-900">{verification.pending}</div>
-                                        </div>
-                                    </div>
-                                    <button className="text-sm text-yellow-600 font-medium hover:text-yellow-700">
-                                        Review
-                                    </button>
-                                </div>
-
-                                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <XCircle className="h-5 w-5 text-red-600" />
-                                        <div>
-                                            <div className="text-sm text-gray-500">Rejected</div>
-                                            <div className="text-xl font-bold text-gray-900">{verification.rejected || 0}</div>
-                                        </div>
-                                    </div>
-                                    <button className="text-sm text-red-600 font-medium hover:text-red-700">
-                                        View
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Booking Trends */}
-                    {bookingStats && (
-                        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <TrendingUp className="h-5 w-5 text-green-600" />
-                                Booking Trends
-                            </h2>
-                            <div className="space-y-4">
-                                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
-                                    <div className="text-sm text-gray-600 mb-1">Today</div>
-                                    <div className="text-2xl font-bold text-gray-900">{bookingStats.today}</div>
-                                    <div className="text-xs text-gray-500 mt-1">+3 from yesterday</div>
-                                </div>
-                                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
-                                    <div className="text-sm text-gray-600 mb-1">This Week</div>
-                                    <div className="text-2xl font-bold text-gray-900">{bookingStats.week}</div>
-                                    <div className="text-xs text-gray-500 mt-1">↑ 12% from last week</div>
-                                </div>
-                                <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
-                                    <div className="text-sm text-gray-600 mb-1">This Month</div>
-                                    <div className="text-2xl font-bold text-gray-900">{bookingStats.month}</div>
-                                    <div className="text-xs text-gray-500 mt-1">↑ 18% from last month</div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Quick Stats */}
-                    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="text-center p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
-                                <div className="text-2xl font-bold text-blue-600">{users.filter(u => u.status === 'active').length}</div>
-                                <div className="text-sm text-gray-600">Active Users</div>
-                            </div>
-                            <div className="text-center p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
-                                <div className="text-2xl font-bold text-green-600">{analytics?.bookings.completed || 0}</div>
-                                <div className="text-sm text-gray-600">Completed</div>
-                            </div>
-                            <div className="text-center p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
-                                <div className="text-2xl font-bold text-orange-600">{analytics?.users.tutors || 0}</div>
-                                <div className="text-sm text-gray-600">Tutors</div>
-                            </div>
-                            <div className="text-center p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
-                                <div className="text-2xl font-bold text-purple-600">{(analytics?.revenue.totalRevenue || 0) / 1000}k</div>
-                                <div className="text-sm text-gray-600">Revenue (K)</div>
-                            </div>
-                        </div>
-                    </div>
+                <div className="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-border/50">
+                    <Badge variant="outline" className="rounded-xl px-3 py-1.5 bg-green-50 text-green-700 border-green-200">
+                        <Activity className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
+                        System Online
+                    </Badge>
                 </div>
+            </div>
 
-                {/* Users Table Section */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Overview Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                    {
+                        title: "Total Revenue",
+                        value: `$${(analytics?.revenue?.totalRevenue || 0).toLocaleString()}`,
+                        trend: analytics?.revenue?.trend || "0%",
+                        icon: DollarSign,
+                        color: "blue",
+                        desc: "vs last month"
+                    },
+                    {
+                        title: "Active Students",
+                        value: (analytics?.users?.students || 0).toLocaleString(),
+                        trend: analytics?.users?.trend || "0%",
+                        icon: Users,
+                        color: "indigo",
+                        desc: "current users"
+                    },
+                    {
+                        title: "Total Tutors",
+                        value: (analytics?.users?.tutors || 0).toLocaleString(),
+                        trend: analytics?.users?.trend || "0%",
+                        icon: UserCheck,
+                        color: "purple",
+                        desc: "verified experts"
+                    },
+                    {
+                        title: "Bookings",
+                        value: (analytics?.bookings?.total || 0).toLocaleString(),
+                        trend: analytics?.bookings?.trend || "0%",
+                        icon: Calendar,
+                        color: "rose",
+                        desc: "this week"
+                    }
+                ].map((stat, i) => (
+                    <Card key={i} className="border-none shadow-xl shadow-gray-200/50 bg-white hover:translate-y-[-2px] transition-all duration-300">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                                <div className={`p-2.5 rounded-xl bg-${stat.color}-50 text-${stat.color}-600`}>
+                                    <stat.icon className="w-5 h-5" />
+                                </div>
+                                <div className={`flex items-center gap-1 text-sm font-bold ${stat.trend.startsWith('+') ? 'text-green-600' : 'text-rose-600'}`}>
+                                    {stat.trend.startsWith('+') ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                                    {stat.trend}
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <CardTitle className="text-3xl font-black text-gray-900">{stat.value}</CardTitle>
+                            <CardDescription className="text-gray-500 font-medium mt-1">{stat.title}</CardDescription>
+                            <p className="text-[10px] text-gray-400 mt-4 font-bold uppercase tracking-widest">{stat.desc}</p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Revenue & Bookings Bar Chart */}
+                <Card className="border-none shadow-xl shadow-gray-200/50 bg-white">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900 mb-1">Users</h2>
-                                <p className="text-gray-600">Total {users.length} registered users</p>
+                                <CardTitle className="text-xl font-black">Weekly Revenue</CardTitle>
+                                <CardDescription>Revenue performance across the week</CardDescription>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <div className="text-sm text-gray-500">
-                                    Page {currentPage} of {totalPages}
-                                </div>
-                                {/* <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                                    Export Data
-                                </button> */}
+                            <div className="p-2 bg-gray-100 rounded-lg">
+                                <Layers className="w-5 h-5 text-gray-600" />
                             </div>
                         </div>
-                    </div>
+                    </CardHeader>
+                    <CardContent className="h-[350px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={revenueStats}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500 }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500 }} />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                    cursor={{ fill: '#f8fafc' }}
+                                />
+                                <Bar dataKey="revenue" fill="#2563eb" radius={[6, 6, 0, 0]} barSize={32} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        User
-                                    </th>
-                                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Role
-                                    </th>
-                                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Join Date
-                                    </th>
-                                    {/* <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                        Actions
-                                    </th> */}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {currentUsers.map(user => (
-                                    <tr
-                                        key={user.id}
-                                        className="hover:bg-gray-50 transition-colors cursor-pointer"
-                                        onClick={() => handleViewUserDetails(user)}
-                                    >
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex-shrink-0">
-                                                    <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                                                        {user.name.charAt(0)}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium text-gray-900">{user.name}</div>
-                                                    <div className="text-sm text-gray-500 flex items-center gap-1">
-                                                        <Mail className="h-3 w-3" />
-                                                        {user.email}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center gap-2">
-                                                <Shield className={`h-4 w-4 ${user.role === 'admin' ? 'text-red-600' :
-                                                    user.role === 'tutor' ? 'text-orange-600' :
-                                                        'text-blue-600'
-                                                    }`} />
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                                                    user.role === 'tutor' ? 'bg-orange-100 text-orange-800' :
-                                                        'bg-blue-100 text-blue-800'
-                                                    }`}>
-                                                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                user.status === 'inactive' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'
-                                                }`}>
-                                                <div className={`w-2 h-2 rounded-full mr-2 ${user.status === 'active' ? 'bg-green-500' :
-                                                    user.status === 'inactive' ? 'bg-red-500' :
-                                                        'bg-yellow-500'
-                                                    }`}></div>
-                                                {user.status}
-                                            </span>
-                                        </td>
-                                        <td className="py-4 px-6 text-sm text-gray-500">
-                                            {new Date(user.joinDate || Date.now()).toLocaleDateString()}
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleViewUserDetails(user);
-                                                    }}
-                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="View Details"
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </button>
-                                                {/* <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </button> */}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Pagination */}
-                    <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="text-sm text-gray-600">
-                            Showing {indexOfFirstUser + 1}-{Math.min(indexOfLastUser, users.length)} of {users.length} users
+                {/* User Growth Area Chart */}
+                <Card className="border-none shadow-xl shadow-gray-200/50 bg-white">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-xl font-black">User Growth</CardTitle>
+                                <CardDescription>Monthly growth of students and tutors</CardDescription>
+                            </div>
+                            <div className="p-2 bg-gray-100 rounded-lg">
+                                <TrendingUp className="w-5 h-5 text-gray-600" />
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={prevPage}
-                                disabled={currentPage === 1}
-                                className={`p-2 rounded-lg border ${currentPage === 1
-                                    ? 'text-gray-400 cursor-not-allowed'
-                                    : 'text-gray-700 hover:bg-gray-100'
-                                    }`}
-                            >
-                                <ChevronLeft className="h-5 w-5" />
-                            </button>
+                    </CardHeader>
+                    <CardContent className="h-[350px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={growthStats}>
+                                <defs>
+                                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
+                                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500 }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500 }} />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Area type="monotone" dataKey="users" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
+                                <Area type="monotone" dataKey="tutors" stroke="#7c3aed" strokeWidth={3} fill="none" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
 
-                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                let pageNum;
-                                if (totalPages <= 5) {
-                                    pageNum = i + 1;
-                                } else if (currentPage <= 3) {
-                                    pageNum = i + 1;
-                                } else if (currentPage >= totalPages - 2) {
-                                    pageNum = totalPages - 4 + i;
-                                } else {
-                                    pageNum = currentPage - 2 + i;
-                                }
+            {/* Category Distribution & Support Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Category Pie Chart */}
+                <Card className="border-none shadow-xl shadow-gray-200/50 bg-white">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-black text-center">Top Categories</CardTitle>
+                        <CardDescription className="text-center">Booking distribution by subject</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={categoryStats}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {categoryStats.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
 
-                                return (
-                                    <button
-                                        key={pageNum}
-                                        onClick={() => paginate(pageNum)}
-                                        className={`px-3 py-1 rounded-lg text-sm font-medium ${currentPage === pageNum
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-gray-700 hover:bg-gray-100'
+                {/* Verification Status List */}
+                <Card className="lg:col-span-2 border-none shadow-xl shadow-gray-200/50 bg-white">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <div>
+                            <CardTitle className="text-xl font-black text-gray-900">Verification Requests</CardTitle>
+                            <CardDescription>Recent tutor verification applications</CardDescription>
+                        </div>
+                        <Button variant="ghost" size="sm" className="font-bold text-primary hover:bg-primary/5">View All</Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {verificationRequests.length > 0 ? (
+                                verificationRequests.map((request, i) => (
+                                    <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-transparent hover:border-gray-200 transition-all cursor-pointer group">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center font-bold text-primary shadow-sm group-hover:scale-105 transition-transform">
+                                                {request.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{request.name}</p>
+                                                <p className="text-xs text-gray-500 font-medium">{request.subject} • {request.time}</p>
+                                            </div>
+                                        </div>
+                                        <Badge 
+                                            className={`rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${
+                                                request.status === 'VERIFIED' ? 'bg-green-100 text-green-700' :
+                                                request.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' :
+                                                'bg-amber-100 text-amber-700'
                                             }`}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                );
-                            })}
+                                        >
+                                            {request.status}
+                                        </Badge>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="py-12 text-center">
+                                    <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto mb-3">
+                                        <UserCheck className="w-6 h-6 text-gray-400" />
+                                    </div>
+                                    <p className="text-gray-500 font-bold text-sm">No pending requests</p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
 
-                            <button
-                                onClick={nextPage}
-                                disabled={currentPage === totalPages}
-                                className={`p-2 rounded-lg border ${currentPage === totalPages
-                                    ? 'text-gray-400 cursor-not-allowed'
-                                    : 'text-gray-700 hover:bg-gray-100'
-                                    }`}
-                            >
-                                <ChevronRight className="h-5 w-5" />
-                            </button>
+            {/* Recent Users Table Section */}
+            <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white overflow-hidden">
+                <div className="p-8 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-primary/10 rounded-2xl">
+                                <Shield className="w-6 h-6 text-primary" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-black text-gray-900">User Management</h2>
+                                <p className="text-sm text-gray-500 font-medium">Monitoring {filteredUsers.length} active platform members</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl">
+                                <button 
+                                    onClick={() => { setUserTypeFilter("ALL"); setCurrentPage(1); }}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${userTypeFilter === "ALL" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                                >
+                                    All Users
+                                </button>
+                                <button 
+                                    onClick={() => { setUserTypeFilter("TUTOR"); setCurrentPage(1); }}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${userTypeFilter === "TUTOR" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                                >
+                                    Tutors
+                                </button>
+                                <button 
+                                    onClick={() => { setUserTypeFilter("STUDENT"); setCurrentPage(1); }}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${userTypeFilter === "STUDENT" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                                >
+                                    Students
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* User Details Modal */}
-                {selectedUser && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xl font-bold text-gray-900">User Details</h3>
-                                    <button
-                                        onClick={closeUserModal}
-                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-
-                                <div className="text-center mb-6">
-                                    <div className="h-20 w-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-                                        {selectedUser.name.charAt(0)}
-                                    </div>
-                                    <h4 className="text-xl font-bold text-gray-900">{selectedUser.name}</h4>
-                                    <p className="text-gray-600">{selectedUser.email}</p>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="p-4 bg-gray-50 rounded-xl">
-                                        <div className="text-sm text-gray-500 mb-1">Role</div>
-                                        <div className="font-medium text-gray-900">{selectedUser.role}</div>
-                                    </div>
-
-                                    <div className="p-4 bg-gray-50 rounded-xl">
-                                        <div className="text-sm text-gray-500 mb-1">Status</div>
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-2 h-2 rounded-full ${selectedUser.status === 'active' ? 'bg-green-500' :
-                                                selectedUser.status === 'inactive' ? 'bg-red-500' :
-                                                    'bg-yellow-500'
-                                                }`}></div>
-                                            <span className="font-medium text-gray-900">{selectedUser.status}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 bg-gray-50 rounded-xl">
-                                        <div className="text-sm text-gray-500 mb-1">Join Date</div>
-                                        <div className="font-medium text-gray-900">
-                                            {new Date(selectedUser.joinDate || Date.now()).toLocaleDateString()}
-                                        </div>
-                                    </div>
-
-                                    {selectedUser.phone && (
-                                        <div className="p-4 bg-gray-50 rounded-xl">
-                                            <div className="text-sm text-gray-500 mb-1">Phone</div>
-                                            <div className="font-medium text-gray-900 flex items-center gap-2">
-                                                <Phone className="h-4 w-4" />
-                                                {selectedUser.phone}
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50/50">
+                            <tr>
+                                <th className="py-5 px-8 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Member Info</th>
+                                <th className="py-5 px-8 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Role & Access</th>
+                                <th className="py-5 px-8 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Platform Status</th>
+                                <th className="py-5 px-8 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Joined</th>
+                                {/* <th className="py-5 px-8 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Actions</th> */}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {currentUsers.map(user => (
+                                <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
+                                    <td className="py-6 px-8">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-black text-lg shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+                                                {user.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <div className="font-black text-gray-900 text-lg leading-tight">{user.name}</div>
+                                                <div className="text-sm text-gray-500 font-medium flex items-center gap-1.5 mt-1">
+                                                    <Mail className="h-3 w-3" />
+                                                    {user.email}
+                                                </div>
                                             </div>
                                         </div>
-                                    )}
-                                </div>
+                                    </td>
+                                    <td className="py-6 px-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-xl ${user.role.toUpperCase() === 'ADMIN' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                {user.role.toUpperCase() === 'ADMIN' ? <Shield className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}
+                                            </div>
+                                            <span className="text-sm font-black text-gray-700 tracking-wide">
+                                                {user.role.toUpperCase()}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="py-6 px-8">
+                                        <Badge 
+                                            variant="outline" 
+                                            className={`rounded-xl px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 ${
+                                                user.status?.toUpperCase() === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
+                                            }`}
+                                        >
+                                            {user.status?.toUpperCase() || 'ACTIVE'}
+                                        </Badge>
+                                    </td>
+                                    <td className="py-6 px-8">
+                                        <div className="text-sm font-bold text-gray-600">
+                                            {new Date(user.joinDate || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </div>
+                                    </td>
+                                    {/* <td className="py-6 px-8">
+                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-xl border-gray-200 hover:bg-primary hover:text-white hover:border-primary transition-all">
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-xl border-gray-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all">
+                                                <XCircle className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </td> */}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-                                {/* <div className="mt-6 flex gap-3">
-                                    <button className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                        Send Message
-                                    </button>
-                                    <button className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
-                                        Edit Profile
-                                    </button>
-                                </div> */}
-                            </div>
+                {/* Modern Pagination */}
+                <div className="p-8 border-t border-gray-100 bg-gray-50/30 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">
+                        Showing <span className="text-gray-900">{indexOfFirstUser + 1}-{Math.min(indexOfLastUser, users.length)}</span> of <span className="text-gray-900">{users.length}</span> Members
+                    </p>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                            className="rounded-xl font-bold h-10 border-gray-200"
+                        >
+                            <ChevronLeft className="w-4 h-4 mr-2" />
+                            Previous
+                        </Button>
+                        <div className="flex items-center gap-1.5">
+                            {[...Array(totalPages)].map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setCurrentPage(i + 1)}
+                                    className={`h-10 w-10 rounded-xl font-bold text-sm transition-all ${
+                                        currentPage === i + 1 
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+                                        : 'bg-white border border-gray-200 text-gray-600 hover:border-primary/50'
+                                    }`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
                         </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                            className="rounded-xl font-bold h-10 border-gray-200"
+                        >
+                            Next
+                            <ChevronRight className="w-4 h-4 ml-2" />
+                        </Button>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );

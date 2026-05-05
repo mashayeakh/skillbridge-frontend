@@ -3,22 +3,22 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { 
-    Calendar, 
-    Clock, 
-    User, 
-    DollarSign, 
-    CheckCircle, 
-    XCircle, 
-    AlertCircle, 
-    Eye, 
-    Trash2, 
-    Loader2, 
-    Search, 
-    Filter, 
-    RefreshCw, 
-    SortAsc, 
-    SortDesc 
+import {
+    Calendar,
+    Clock,
+    User,
+    DollarSign,
+    CheckCircle,
+    XCircle,
+    AlertCircle,
+    Eye,
+    Trash2,
+    Loader2,
+    Search,
+    Filter,
+    RefreshCw,
+    SortAsc,
+    SortDesc
 } from "lucide-react";
 import { apiFetchBooking } from "@/actions/student";
 import { Card } from "@/components/ui/card";
@@ -87,7 +87,7 @@ export default function BookingsPage() {
         // Search Filter (Tutor Name)
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            result = result.filter(booking => 
+            result = result.filter(booking =>
                 booking.tutorProfile.name.toLowerCase().includes(query) ||
                 booking.id.toLowerCase().includes(query)
             );
@@ -170,14 +170,14 @@ export default function BookingsPage() {
                     <p className="text-muted-foreground font-medium mt-1">Manage and track your tutoring journey</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button 
-                        variant="outline" 
+                    <Button
+                        variant="outline"
                         className="rounded-2xl h-12 px-6 border-2 font-bold"
                         onClick={() => setShowFilters(!showFilters)}
                     >
                         <Filter className="mr-2 h-4 w-4" /> Filters
                     </Button>
-                    <Button 
+                    <Button
                         className="rounded-2xl h-12 px-8 bg-primary text-white font-black shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
                         onClick={() => window.location.href = '/browsetutors'}
                     >
@@ -210,8 +210,8 @@ export default function BookingsPage() {
                             <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Search</label>
                             <div className="relative group">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                <Input 
-                                    placeholder="Tutor name or ID..." 
+                                <Input
+                                    placeholder="Tutor name or ID..."
                                     className="pl-12 h-12 rounded-2xl bg-background/50 border-border/50"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -222,10 +222,10 @@ export default function BookingsPage() {
                             <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Status</label>
                             <div className="flex bg-muted/50 p-1 rounded-2xl overflow-x-auto">
                                 {["all", "CONFIRMED", "PENDING", "COMPLETED", "CANCELLED"].map((status) => (
-                                    <Button 
-                                        key={status} 
-                                        variant={selectedStatus === status ? "default" : "ghost"} 
-                                        size="sm" 
+                                    <Button
+                                        key={status}
+                                        variant={selectedStatus === status ? "default" : "ghost"}
+                                        size="sm"
                                         className="rounded-xl px-4 font-bold text-[10px] uppercase tracking-tighter h-10 flex-1"
                                         onClick={() => setSelectedStatus(status)}
                                     >
@@ -237,15 +237,15 @@ export default function BookingsPage() {
                         <div className="space-y-2">
                             <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Sort By</label>
                             <div className="flex gap-2">
-                                <Button 
-                                    variant={sortBy.includes("date") ? "default" : "outline"} 
+                                <Button
+                                    variant={sortBy.includes("date") ? "default" : "outline"}
                                     className="rounded-2xl h-12 flex-1 font-bold text-xs"
                                     onClick={() => setSortBy(sortBy === "date_desc" ? "date_asc" : "date_desc")}
                                 >
                                     {sortBy === "date_desc" ? <SortDesc className="mr-2 h-4 w-4" /> : <SortAsc className="mr-2 h-4 w-4" />} Date
                                 </Button>
-                                <Button 
-                                    variant={sortBy.includes("price") ? "default" : "outline"} 
+                                <Button
+                                    variant={sortBy.includes("price") ? "default" : "outline"}
                                     className="rounded-2xl h-12 flex-1 font-bold text-xs"
                                     onClick={() => setSortBy(sortBy === "price_desc" ? "price_asc" : "price_desc")}
                                 >
@@ -264,8 +264,8 @@ export default function BookingsPage() {
                         <Calendar className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
                         <h3 className="text-xl font-black">No sessions found</h3>
                         <p className="text-muted-foreground mt-2">Try adjusting your filters or book a new session!</p>
-                        <Button 
-                            variant="link" 
+                        <Button
+                            variant="link"
                             className="mt-4 font-black text-primary"
                             onClick={() => { setSearchQuery(""); setSelectedStatus("all"); }}
                         >
@@ -314,7 +314,7 @@ export default function BookingsPage() {
                                     </div>
 
                                     {/* Right: Actions */}
-                                    <div className="flex items-center gap-3">
+                                    {/* <div className="flex items-center gap-3">
                                         <Button 
                                             variant="outline" 
                                             size="icon" 
@@ -341,10 +341,10 @@ export default function BookingsPage() {
                                                 Book Again
                                             </Button>
                                         )}
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
-                            
+
                             {/* Decorative element */}
                             <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Sparkles className="h-4 w-4 text-primary/30" />

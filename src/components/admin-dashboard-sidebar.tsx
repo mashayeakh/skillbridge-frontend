@@ -35,11 +35,11 @@ export function AdminDashboardSidebar() {
             href: "/admin/manage-user",
             icon: User,
         },
-        {
-            name: "Platform Settings",
-            href: "/admin/settings",
-            icon: Settings, 
-        },
+        // {
+        //     name: "Platform Settings",
+        //     href: "/admin/settings",
+        //     icon: Settings, 
+        // },
     ];
 
     return (
@@ -80,7 +80,7 @@ export function AdminDashboardSidebar() {
                 </nav>
 
                 {/* User Info Footer */}
-                
+
             </div>
         </aside>
     );

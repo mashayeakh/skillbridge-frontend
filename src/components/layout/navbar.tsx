@@ -188,10 +188,10 @@ const Navbar = ({
           </Link>
 
           {/* Minimalist Navigation */}
-          <NavigationMenu className="flex-1 max-w-lg">
-            <NavigationMenuList className="gap-1">
+          <NavigationMenu className="flex-1 max-w-2xl">
+            <NavigationMenuList className="gap-2 justify-center">
               {menu.map((item) => {
-                if (item.title === "Become a Tutor" && role !== "STUDENT") return null;
+                if (item.title === "Become a Tutor" && (role === "TUTOR" || role === "ADMIN")) return null;
                 if (item.title === "Browse Tutors" && (role === "TUTOR" || role === "ADMIN")) return null;
 
                 return (
@@ -373,7 +373,7 @@ const Navbar = ({
 
                     <nav className="space-y-1">
                       {menu.map((item) => {
-                        if (item.title === "Become a Tutor" && role !== "STUDENT") return null;
+                        if (item.title === "Become a Tutor" && (role === "TUTOR" || role === "ADMIN")) return null;
                         return (
                           <Link
                             key={item.title}

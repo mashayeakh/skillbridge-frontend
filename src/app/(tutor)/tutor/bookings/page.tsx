@@ -25,6 +25,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getTutorBookings } from "@/actions/tutor";
 
 interface Student {
     id: string;
@@ -60,40 +61,19 @@ export default function TutorBookingsPage() {
         const fetchBookings = async () => {
             try {
                 setLoading(true);
-                // In a real app, this would be an API call
-                // For now, we'll fetch from the backend if endpoint exists or use mock
-                const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tutor/bookings`, {
-                    credentials: "include"
-                });
-                const result = await response.json();
-                if (result.success) {
+                const result = await getTutorBookings();
+                
+                if (result.success && result.data) {
                     setBookings(result.data);
                 } else {
-                    // Fallback mock data for demo if API fails
-                    setBookings([
-                        {
-                            id: "1",
-                            student: { id: "s1", name: "John Doe", email: "john@example.com" },
-                            startTime: new Date(Date.now() + 86400000).toISOString(),
-                            endTime: new Date(Date.now() + 86400000 + 3600000).toISOString(),
-                            status: "CONFIRMED",
-                            price: 50,
-                            createdAt: new Date().toISOString()
-                        },
-                        {
-                            id: "2",
-                            student: { id: "s2", name: "Jane Smith", email: "jane@example.com" },
-                            startTime: new Date(Date.now() - 86400000).toISOString(),
-                            endTime: new Date(Date.now() - 86400000 + 3600000).toISOString(),
-                            status: "COMPLETED",
-                            price: 45,
-                            createdAt: new Date().toISOString()
-                        }
-                    ]);
+                    console.error("API returned failure:", result.message);
+                    setBookings([]);
+                    toast.error(result.message || "Failed to load bookings");
                 }
             } catch (error) {
                 console.error("Failed to fetch tutor bookings:", error);
-                toast.error("Failed to load bookings");
+                toast.error("An unexpected error occurred");
+                setBookings([]);
             } finally {
                 setLoading(false);
             }
@@ -103,7 +83,8 @@ export default function TutorBookingsPage() {
     }, []);
 
     const filteredBookings = useMemo(() => {
-        let result = [...bookings];
+        const bookingsArray = Array.isArray(bookings) ? bookings : [];
+        let result = [...bookingsArray];
 
         if (filters.search) {
             const query = filters.search.toLowerCase();
@@ -137,11 +118,14 @@ export default function TutorBookingsPage() {
         return result;
     }, [bookings, filters]);
 
-    const stats = useMemo(() => ({
-        total: bookings.length,
-        upcoming: bookings.filter(b => b.status === "CONFIRMED" && new Date(b.startTime) > new Date()).length,
-        revenue: bookings.filter(b => b.status === "COMPLETED").reduce((acc, curr) => acc + curr.price, 0)
-    }), [bookings]);
+    const stats = useMemo(() => {
+        const bookingsArray = Array.isArray(bookings) ? bookings : [];
+        return {
+            total: bookingsArray.length,
+            upcoming: bookingsArray.filter(b => (b.status === "CONFIRMED" || b.status === "PENDING") && new Date(b.startTime) > new Date()).length,
+            revenue: bookingsArray.filter(b => b.status !== "CANCELLED").reduce((acc, curr) => acc + (curr.price || 0), 0)
+        };
+    }, [bookings]);
 
     const getStatusStyles = (status: string) => {
         switch (status) {
@@ -214,7 +198,7 @@ export default function TutorBookingsPage() {
                         </div>
                         <div>
                             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Revenue</p>
-                            <p className="text-2xl font-black text-gray-900">${stats.revenue}</p>
+                            <p className="text-2xl font-black text-gray-900">${stats.revenue.toFixed(2)}</p>
                         </div>
                     </div>
                 </Card>
@@ -329,8 +313,10 @@ export default function TutorBookingsPage() {
                                                 {booking.status}
                                             </Badge>
                                         </td>
-                                        <td className="px-6 py-6 font-black text-gray-900">
-                                            ${booking.price}
+                                        <td className="px-6 py-6">
+                                            <div className="text-sm font-bold text-gray-900">
+                                                ${booking.price?.toFixed(2)}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2">

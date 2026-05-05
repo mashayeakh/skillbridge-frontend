@@ -28,6 +28,11 @@ export function TutorDashboardSidebar() {
             href: "/tutor/availability",
             icon: Calendar,
         },
+        // {
+        //     name: "Student View",
+        //     href: "/dashboard",
+        //     icon: BookOpen,
+        // },
     ];
 
     return (
@@ -59,7 +64,7 @@ export function TutorDashboardSidebar() {
                 </nav>
 
                 {/* User Info Footer */}
-                
+
             </div>
         </aside>
     );
