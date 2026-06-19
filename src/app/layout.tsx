@@ -2,8 +2,8 @@
 "use client"; // needed for useSession
 
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
-import "./globals.css";
 import { Toaster } from "sonner";
+import "./globals.css";
 
 
 const fraunces = Fraunces({
@@ -19,6 +19,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { BackendWarmer } from "@/components/BackendWarmer";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
+          <BackendWarmer />
           {children}
           <Toaster richColors position="top-center" />
         </ThemeProvider>
